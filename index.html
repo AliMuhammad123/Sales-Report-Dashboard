@@ -65,6 +65,24 @@
   .cmp-flag{font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;text-align:right}
   .cmp-flag b{color:var(--ink)}
 
+  /* at a glance */
+  .glance-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .glance-head .sec-num{margin-bottom:0}
+  .glance-sub{font-size:13px;color:var(--ink-soft)}
+  .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:13px;margin-bottom:20px}
+  .ins{background:var(--surface);border:1px solid var(--vein);border-radius:14px;padding:15px 16px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .ins::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,var(--onyx))}
+  .ins .ik{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:6px}
+  .ins .ik .ico{color:var(--ac,var(--onyx))}
+  .ins .ihi{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-top:7px;letter-spacing:-.01em;line-height:1.15;color:var(--ink)}
+  .ins .it{font-size:13px;line-height:1.5;margin-top:5px;color:var(--ink-soft)}
+  .ins .it b{font-weight:600;color:var(--ink)}
+
+  .next-strip{display:flex;gap:13px;align-items:center;background:var(--surface-2);border:1px dashed var(--vein);border-radius:13px;padding:13px 16px;margin-bottom:26px}
+  .next-strip .ns-ic{width:34px;height:34px;border-radius:9px;background:var(--surface);border:1px solid var(--vein);display:flex;align-items:center;justify-content:center;color:var(--ochre);flex:none}
+  .next-strip .ns-tx{font-size:13px;color:var(--ink-soft);line-height:1.45}
+  .next-strip .ns-tx b{color:var(--ink);font-weight:600}
+
   /* trend */
   .trend{background:var(--surface);border:1px solid var(--vein);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px 10px;margin-bottom:22px}
   .trend .th{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
@@ -77,11 +95,13 @@
   .kpi .lab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
   .kpi .val{font-family:'Fraunces',serif;font-weight:600;font-size:30px;line-height:1.05;margin-top:9px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   .kpi.accent .val{color:var(--onyx-deep)}
-  .kpi .dl{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:20px}
+  .kpi-foot{display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .kpi .dl{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:20px}
   .dl.pos{color:var(--up);background:rgba(78,107,74,.1)}
   .dl.neg{color:var(--down);background:rgba(168,89,62,.1)}
   .dl.neu{color:var(--ink-faint);background:var(--surface-2)}
-  .kpi .dl .sub{color:var(--ink-faint);font-weight:400}
+  .kpi .vs{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
+  .kpi .sub{font-size:11.5px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;margin-top:7px}
 
   /* sections */
   .sec{margin-top:50px}
@@ -226,6 +246,14 @@
       <div class="cmp-flag" id="cmpFlag"></div>
     </div>
 
+    <div class="glance-head"><span class="sec-num">At a glance</span><span class="glance-sub">The numbers below, in plain English.</span></div>
+    <div class="insights" id="insights"></div>
+
+    <div class="next-strip" id="nextStrip">
+      <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
+      <div class="ns-tx"><b>Coming next:</b> add your <b>Inventory</b> and <b>Ads</b> reports and this app will recommend what to restock and which products to advertise.</div>
+    </div>
+
     <div class="trend" id="trendBox" style="display:none">
       <div class="th"><span class="t">Ordered sales by period</span><span class="t" id="trendHint"></span></div>
       <canvas id="trendCanvas"></canvas>
@@ -235,7 +263,7 @@
 
     <div class="sec">
       <div class="sec-head"><span class="sec-num">01 — Signature view</span><div class="t">Sales vs. sessions efficiency</div>
-        <div class="d">Each product placed by traffic it used (sessions →) against revenue it returned (↑). Lines are this period's medians. Top-left = strong sales on light traffic.</div></div>
+        <div class="d">Each dot is a product. Further <b>right</b> = more visitors; <b>higher up</b> = more sales. The dashed lines are this period's averages, so the <b>top-left</b> box holds products that sell a lot while using little traffic — your most efficient earners.</div></div>
       <div class="panel quad-wrap"><div class="quad-chart"><canvas id="quadCanvas"></canvas></div><div class="quad-side" id="quadLegend"></div></div>
     </div>
 
@@ -475,12 +503,65 @@ function convColor(v){
   return `background:rgba(${r},${g},${b},.18);color:var(--onyx-deep)`;
 }
 function deltaPill(cur,prev,kind){ // kind: 'good'|'neutral'
-  if(prev==null||prev===0||!isFinite(prev)) return `<span class="dl neu"><span class="sub">no prior</span></span>`;
+  if(prev==null||prev===0||!isFinite(prev)) return `<span class="dl neu">no prior</span>`;
   const d=(cur-prev)/prev*100;
   const up=d>=0;
   let cls = kind==='neutral'?'neu':(up?'pos':'neg');
   const arrow = Math.abs(d)<0.05?'·':(up?'▲':'▼');
   return `<span class="dl ${cls}">${arrow} ${Math.abs(d).toFixed(1)}%</span>`;
+}
+
+const ICO={
+  star:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>',
+  bolt:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>',
+  leak:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22a7 7 0 0 0 7-7c0-3-3-7-7-11C8 8 5 12 5 15a7 7 0 0 0 7 7z"/></svg>',
+  trend:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 17l6-6 4 4 7-7"/><path d="M17 7h4v4"/></svg>'
+};
+function insCard(ac,icon,kicker,headline,text){
+  return `<div class="ins" style="--ac:${ac}"><div class="ik"><span class="ico">${icon}</span>${kicker}</div><div class="ihi">${headline}</div><div class="it">${text}</div></div>`;
+}
+function buildInsights(M,PM,prevP){
+  const cards=[];
+  const bySales=[...M.rows].sort((a,b)=>b.sales-a.sales);
+  // 1. top earner
+  if(bySales[0]&&bySales[0].sales>0){
+    const t=bySales[0];const share=M.totSales?Math.round(t.sales/M.totSales*100):0;
+    cards.push(insCard('#B47A2E',ICO.star,'Top earner',short(t.title,40),
+      `Brought in <b>${fUSD(t.sales)}</b> — about <b>${share}%</b> of this period's revenue from one product.`));
+  }
+  // 2. most efficient (best conversion among real sellers)
+  const eff=M.rows.filter(p=>p.units>=3&&p.usp>0).sort((a,b)=>b.usp-a.usp)[0];
+  if(eff){
+    cards.push(insCard('#4E6B4A',ICO.bolt,'Most efficient',short(eff.title,40),
+      `Converts <b>${eff.usp}%</b> of its visitors into buyers — your best return on traffic. Keep it in stock and consider advertising it.`));
+  }
+  // 3. biggest leak
+  const sinks=M.rows.filter(p=>p.cls==='sink');
+  const sinkSess=sinks.reduce((a,p)=>a+(p.sessions||0),0);
+  const zero=M.rows.filter(p=>p.sessions!=null&&p.units===0).length;
+  if(sinks.length){
+    cards.push(insCard('#A8593E',ICO.leak,'Biggest leak',`${sinks.length} traffic sink${sinks.length>1?'s':''}`,
+      `These pulled <b>${num(sinkSess)}</b> visits but sold below par. Their listing, price, or images may be losing the sale.`));
+  }else if(zero){
+    cards.push(insCard('#A8593E',ICO.leak,'Biggest leak',`${zero} got visits, no sales`,
+      `<b>${zero}</b> products drew traffic but zero orders this period — worth a listing review.`));
+  }
+  // 4. movement vs previous
+  if(PM&&prevP){
+    const d=PM.totSales?((M.totSales-PM.totSales)/PM.totSales*100):0;
+    const up=d>=0;
+    // biggest gainer by matched asin
+    const prevMap={};prevP.rows.forEach(r=>{if(r.asin)prevMap[r.asin]=r;});
+    let gain=null;M.rows.forEach(p=>{const pr=prevMap[p.asin];if(pr){const dv=p.sales-pr.sales;if(!gain||dv>gain.dv)gain={p,dv};}});
+    const gtxt=gain&&gain.dv>0?` Biggest gainer: <b>${short(gain.p.title,30)}</b> (+${fUSD(gain.dv)}).`:'';
+    cards.push(insCard(up?'#4E6B4A':'#A8593E',ICO.trend,'Momentum',
+      `Revenue ${up?'up':'down'} ${Math.abs(d).toFixed(1)}%`,
+      `Versus <b>${prevP.label}</b>, ordered sales ${up?'rose':'fell'} from <b>${fUSD(PM.totSales)}</b> to <b>${fUSD(M.totSales)}</b>.${gtxt}`));
+  }else{
+    cards.push(insCard('#8B8E82',ICO.trend,'Momentum','First period on record',
+      `Add next week or month's report and this card will show whether you're growing and which products are rising fastest.`));
+  }
+  $('#insights').innerHTML=cards.slice(0,4).join('');
 }
 
 function render(){
@@ -513,18 +594,21 @@ function render(){
   drawTrend();
 
   // KPIs
+  const vsLabel = prevP ? ('vs '+prevP.label) : '';
   const kpis=[
-    {lab:'Ordered Sales',val:fUSD(M.totSales),accent:true,d:deltaPill(M.totSales,PM&&PM.totSales,'good'),sub:fUSD2(M.totUnits?M.totSales/M.totUnits:0)+' / unit'},
+    {lab:'Ordered Sales',val:fUSD(M.totSales),accent:true,d:deltaPill(M.totSales,PM&&PM.totSales,'good'),sub:fUSD2(M.totUnits?M.totSales/M.totUnits:0)+' per unit'},
     {lab:'Units Ordered',val:num(M.totUnits),d:deltaPill(M.totUnits,PM&&PM.totUnits,'good'),sub:num(M.totOrders)+' order items'},
-    {lab:'Est. Sessions',val:num(M.totSess),d:deltaPill(M.totSess,PM&&PM.totSess,'neutral'),sub:'traffic'},
-    {lab:'Avg Conversion',val:M.conv.toFixed(2)+'%',d:deltaPill(M.conv,PM&&PM.conv,'good'),sub:'units ÷ sessions'},
+    {lab:'Est. Sessions',val:num(M.totSess),d:deltaPill(M.totSess,PM&&PM.totSess,'neutral'),sub:'product page visits'},
+    {lab:'Avg Conversion',val:M.conv.toFixed(2)+'%',d:deltaPill(M.conv,PM&&PM.conv,'good'),sub:'visits that became sales'},
     {lab:'Hidden Winners',val:String(M.winners.length),accent:true,d:deltaPill(M.winners.length,PM&&PM.winners.length,'good'),sub:'high sales · low traffic'}
   ];
-  $('#kpis').innerHTML=kpis.map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.d} <span class="dl neu" style="background:transparent;padding-left:0"><span class="sub">${k.sub}</span></span></div>`).join('');
+  $('#kpis').innerHTML=kpis.map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="kpi-foot">${k.d}${vsLabel?`<span class="vs">${vsLabel}</span>`:''}</div><div class="sub">${k.sub}</div></div>`).join('');
+
+  buildInsights(M,PM,prevP);
 
   // quad legend
   const order=['win','work','sink','quiet'];
-  $('#quadLegend').innerHTML=order.map(c=>{const C=CLASS[c],n=M.rows.filter(p=>p.cls===c).length;
+  $('#quadLegend').innerHTML=`<div style="font-size:12px;color:var(--ink-soft);line-height:1.45;margin-bottom:2px">Every product lands in one of four groups:</div>`+order.map(c=>{const C=CLASS[c],n=M.rows.filter(p=>p.cls===c).length;
     return `<div class="ql"><span class="dot" style="background:${C.color}"></span><div><div class="qn">${C.name} <span style="color:var(--ink-faint);font-weight:400">· ${n}</span></div><div class="qd">${C.desc}</div></div></div>`;
   }).join('')+`<div class="quad-note">Split at medians<br>· ${num(Math.round(M.medS))} sessions · ${fUSD(M.medV)} sales</div>`;
 
