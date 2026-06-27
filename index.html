@@ -90,10 +90,11 @@
   .trend canvas{width:100%!important;height:120px!important}
 
   /* KPIs */
-  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--vein);border:1px solid var(--vein);border-radius:14px;overflow:hidden;margin-bottom:34px}
-  .kpi{background:var(--surface);padding:18px 18px 20px}
-  .kpi .lab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
-  .kpi .val{font-family:'Fraunces',serif;font-weight:600;font-size:30px;line-height:1.05;margin-top:9px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--vein);border:1px solid var(--vein);border-radius:16px;overflow:hidden;margin-bottom:30px;box-shadow:var(--shadow)}
+  .kpi{background:var(--surface);padding:20px 20px 22px}
+  .kpi .lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .kpi .val{font-family:'Fraunces',serif;font-weight:600;font-size:38px;line-height:1.02;margin-top:11px;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+  .kpi.accent{background:linear-gradient(180deg,rgba(78,107,74,.05),var(--surface))}
   .kpi.accent .val{color:var(--onyx-deep)}
   .kpi-foot{display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap}
   .kpi .dl{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:20px}
@@ -205,6 +206,46 @@
     .tbl thead th:nth-child(5),.tbl tbody td:nth-child(5){display:none}
   }
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+  /* export menu */
+  .exportwrap{position:relative}
+  .menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--vein);border-radius:12px;box-shadow:0 20px 50px -20px rgba(32,35,30,.45);padding:6px;min-width:210px;z-index:50;display:none}
+  .menu.on{display:block;animation:fade .15s}
+  .menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink);padding:9px 11px;border-radius:8px;cursor:pointer;text-align:left}
+  .menu button:hover{background:var(--surface-2)}
+  .menu button svg{color:var(--ink-soft);flex:none}
+
+  /* comparison table */
+  .cmp-tbl{width:100%;border-collapse:collapse}
+  .cmp-tbl thead th{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);text-align:right;padding:13px 18px;border-bottom:1px solid var(--vein);background:var(--surface-2)}
+  .cmp-tbl thead th:first-child{text-align:left}
+  .cmp-tbl tbody td{padding:13px 18px;border-bottom:1px solid var(--vein-soft);text-align:right;font-family:'JetBrains Mono',monospace;font-size:14px;font-variant-numeric:tabular-nums}
+  .cmp-tbl tbody td:first-child{text-align:left;font-family:'Inter',sans-serif;font-weight:500;font-size:13.5px}
+  .cmp-tbl tbody tr:last-child td{border-bottom:0}
+  .cmp-tbl .cur{font-weight:600;color:var(--onyx-deep)}
+  .cmp-chg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:12.5px;font-weight:600}
+  .cmp-chg.pos{color:var(--up);background:rgba(78,107,74,.1)}
+  .cmp-chg.neg{color:var(--down);background:rgba(168,89,62,.1)}
+  .cmp-chg.neu{color:var(--ink-faint);background:var(--surface-2)}
+
+  .seg-lab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);padding:0 8px;align-self:center}
+
+  /* rename + backup */
+  .mng-row .edit{border:0;background:transparent;color:var(--ink-faint);cursor:pointer;padding:6px;border-radius:7px}
+  .mng-row .edit:hover{color:var(--onyx-deep);background:var(--surface)}
+  .mng-row input.rename{font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;border:1px solid var(--onyx);border-radius:7px;padding:5px 8px;width:100%;background:var(--surface)}
+  .backup-row{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--vein)}
+  .backup-row .btn{flex:1;justify-content:center;font-size:12.5px}
+
+  @media print{
+    .topbar,.next-strip,.tbl-tools,#trendHint,.exportwrap,.dz-s{display:none!important}
+    body{background:#fff!important;background-image:none!important}
+    .wrap{max-width:100%;padding:0}
+    .panel,.kpis,.ins,.trend,.cmp-tbl,.tbl{box-shadow:none!important;break-inside:avoid}
+    .sec{break-inside:avoid;margin-top:24px}
+    .insights{grid-template-columns:repeat(2,1fr)}
+    @page{margin:14mm}
+  }
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -219,6 +260,16 @@
   <button class="btn ghost" id="manageBtn" style="display:none" title="Manage periods">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
   </button>
+  <div class="exportwrap" id="exportWrap" style="display:none">
+    <button class="btn" id="exportBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      Export
+    </button>
+    <div class="menu" id="exportMenu">
+      <button data-x="pdf"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Save as PDF</button>
+      <button data-x="csv"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>Download table (CSV)</button>
+    </div>
+  </div>
   <button class="btn primary" id="addBtn">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
     Add report
@@ -230,13 +281,13 @@
   <section class="empty" id="empty">
     <span class="mono" style="font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--onyx)">Amazon Sales &amp; Traffic</span>
     <h1>Drop a report. <em>See what sold.</em></h1>
-    <p>Upload your weekly or monthly Business Report and the dashboard builds itself — top sellers, the efficiency quadrant, and how every product moved since last time.</p>
+    <p>Upload your weekly or monthly Business Report and the dashboard builds itself — your best sellers, which products to advertise, and how everything moved since last time.</p>
     <div class="dropzone" id="dropzone">
       <div class="dz-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg></div>
       <div class="dz-t">Drop your Excel or CSV here</div>
       <div class="dz-s">or click to choose · .xlsx · .xls · .csv</div>
     </div>
-    <div class="hint">Looks for: Title · ASIN · Units Ordered · Unit Session % · Ordered Product Sales · Total Order Items<br>Sessions are derived when the report doesn't list them outright.</div>
+    <div class="hint">Works with the Amazon "Sales &amp; Traffic by Child Item" report.<br>Visits are read from the report, or worked out from its conversion rate when not listed.</div>
   </section>
 
   <!-- dashboard -->
@@ -246,39 +297,46 @@
       <div class="cmp-flag" id="cmpFlag"></div>
     </div>
 
-    <div class="glance-head"><span class="sec-num">At a glance</span><span class="glance-sub">The numbers below, in plain English.</span></div>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="glance-head"><span class="sec-num">In plain words</span><span class="glance-sub">What these numbers are telling you.</span></div>
     <div class="insights" id="insights"></div>
 
     <div class="next-strip" id="nextStrip">
       <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
-      <div class="ns-tx"><b>Coming next:</b> add your <b>Inventory</b> and <b>Ads</b> reports and this app will recommend what to restock and which products to advertise.</div>
+      <div class="ns-tx"><b>Coming next:</b> add your <b>Inventory</b>, <b>Ads</b>, and <b>Returns</b> reports and this app will recommend what to restock, what to advertise, and flag products with high returns.</div>
+    </div>
+
+    <div class="sec" id="compareSec" style="display:none">
+      <div class="sec-head"><span class="sec-num">This period vs last</span><div class="t" id="compareTitle">Side-by-side</div>
+        <div class="d">Every headline number, this period next to last, with the change.</div></div>
+      <div class="panel"><table class="cmp-tbl"><thead><tr><th>Measure</th><th id="cmpPrevH">Last</th><th id="cmpCurH">This</th><th>Change</th></tr></thead><tbody id="cmpBody"></tbody></table></div>
     </div>
 
     <div class="trend" id="trendBox" style="display:none">
-      <div class="th"><span class="t">Ordered sales by period</span><span class="t" id="trendHint"></span></div>
+      <div class="th"><span class="t">Sales by period</span><span class="t" id="trendHint"></span></div>
       <canvas id="trendCanvas"></canvas>
     </div>
 
-    <div class="kpis" id="kpis"></div>
-
     <div class="sec">
-      <div class="sec-head"><span class="sec-num">01 — Signature view</span><div class="t">Sales vs. sessions efficiency</div>
-        <div class="d">Each dot is a product. Further <b>right</b> = more visitors; <b>higher up</b> = more sales. The dashed lines are this period's averages, so the <b>top-left</b> box holds products that sell a lot while using little traffic — your most efficient earners.</div></div>
+      <div class="sec-head"><span class="sec-num">01 — The map</span><div class="t">Sales vs. visits</div>
+        <div class="d">Each dot is a product. Further <b>right</b> = more people viewed it; <b>higher up</b> = more sales. The dashed lines are this period's averages, so the <b>top-left</b> box holds products that sell a lot while needing few visits — your most efficient earners.</div></div>
       <div class="panel quad-wrap"><div class="quad-chart"><canvas id="quadCanvas"></canvas></div><div class="quad-side" id="quadLegend"></div></div>
     </div>
 
     <div class="sec grid2">
-      <div><div class="sec-head"><span class="sec-num">02 — The answer</span><div class="t">Hidden winners</div></div><div class="panel win-list" id="winners"></div></div>
-      <div><div class="sec-head"><span class="sec-num">03 — Volume leaders</span><div class="t">Top sellers</div></div>
+      <div><div class="sec-head"><span class="sec-num">02 — Worth advertising</span><div class="t">Easy sellers</div></div><div class="panel win-list" id="winners"></div></div>
+      <div><div class="sec-head"><span class="sec-num">03 — Your biggest</span><div class="t">Top sellers</div></div>
         <div class="panel"><div class="bar-head"><div class="seg" id="barSeg"><button data-k="sales" class="on">Revenue</button><button data-k="units">Units</button></div></div><div class="bar-chart"><canvas id="barCanvas"></canvas></div></div></div>
     </div>
 
     <div class="sec">
-      <div class="sec-head"><span class="sec-num">04 — Full catalog</span><div class="t">Every product</div>
-        <div class="d">Sortable and searchable. The <b>Δ</b> column shows revenue change versus the previous period when one is available.</div></div>
+      <div class="sec-head"><span class="sec-num">04 — Full list</span><div class="t">Every product</div>
+        <div class="d">Search and sort any column. When you have two periods, the <b>Change</b> column shows how each product moved — pick the measure with the buttons.</div></div>
       <div class="tbl-tools">
         <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="search" placeholder="Search title or ASIN…" autocomplete="off"></div>
-        <div class="filt" id="filt"><button data-f="all" class="on">All</button><button data-f="win">Winners</button><button data-f="work">Workhorses</button><button data-f="sink">Traffic sinks</button></div>
+        <div class="seg" id="deltaSeg" style="display:none"><span class="seg-lab">Change in</span><button data-dm="sales" class="on">Sales</button><button data-dm="units">Units</button><button data-dm="usp">Conv%</button></div>
+        <div class="filt" id="filt"><button data-f="all" class="on">All</button><button data-f="win">Easy</button><button data-f="work">Big</button><button data-f="sink">Needs work</button></div>
       </div>
       <table class="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
       <div class="tcount" id="tcount"></div>
@@ -306,10 +364,16 @@
 <!-- manage modal -->
 <div class="scrim" id="mngScrim"><div class="modal">
   <h3>Saved periods</h3>
-  <p>Switch, rename, or remove a period. Data lives in this app on your device.</p>
+  <p>Switch, rename, or remove a period. Use Back up to save a copy of everything to your PC.</p>
   <div class="mng-list" id="mngList"></div>
+  <div class="backup-row">
+    <button class="btn" id="backupBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Back up all data</button>
+    <button class="btn" id="restoreBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 9l5-5 5 5"/><path d="M12 4v12"/></svg>Restore from file</button>
+  </div>
   <div class="modal-foot"><button class="btn ghost" id="mngClose">Done</button></div>
 </div></div>
+
+<input type="file" id="restoreInput" accept=".json" style="display:none">
 
 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none">
 
@@ -463,10 +527,10 @@ function mapColumns(aoa){
 
 /* ---------- metrics + classification ---------- */
 const CLASS={
-  win:{name:'Hidden winners',color:'#B47A2E',tag:'t-win',desc:'High sales, low traffic. Selling above what their sessions predict.'},
-  work:{name:'Workhorses',color:'#4E6B4A',tag:'t-work',desc:'High sales and high traffic. Dependable volume drivers.'},
-  quiet:{name:'Quiet',color:'#9AA08F',tag:'t-quiet',desc:'Low sales, low traffic. The long tail.'},
-  sink:{name:'Traffic sinks',color:'#A8593E',tag:'t-sink',desc:'Plenty of sessions, weak sales. Listings may be leaking.'}
+  win:{name:'Easy Sellers',short:'Easy',color:'#B47A2E',tag:'t-win',desc:'Sell well without many visits — your most efficient products. Great ones to advertise.'},
+  work:{name:'Big Sellers',short:'Big',color:'#4E6B4A',tag:'t-work',desc:'Lots of sales and lots of visits. Your dependable volume — keep them in stock.'},
+  quiet:{name:'Slow Movers',short:'Slow',color:'#9AA08F',tag:'t-quiet',desc:'Few sales and few visits. The long tail.'},
+  sink:{name:'Needs Attention',short:'Fix',color:'#A8593E',tag:'t-sink',desc:'Plenty of visits but weak sales. The listing, price, or photos may be losing the sale.'}
 };
 function median(arr,k){const s=arr.map(x=>x[k]).filter(v=>v!=null).sort((a,b)=>a-b);if(!s.length)return 0;const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function compute(rows){
@@ -520,6 +584,36 @@ const ICO={
 function insCard(ac,icon,kicker,headline,text){
   return `<div class="ins" style="--ac:${ac}"><div class="ik"><span class="ico">${icon}</span>${kicker}</div><div class="ihi">${headline}</div><div class="it">${text}</div></div>`;
 }
+function cmpRow(label,cur,prev,fmt,kind){
+  const c=fmt(cur), p=prev==null?'—':fmt(prev);
+  let chg='<span class="cmp-chg neu">—</span>';
+  if(prev!=null&&prev!==0&&isFinite(prev)){
+    const d=(cur-prev)/prev*100, up=d>=0;
+    const cls=kind==='neutral'?'neu':(up?'pos':'neg');
+    const ar=Math.abs(d)<0.05?'·':(up?'▲':'▼');
+    chg=`<span class="cmp-chg ${cls}">${ar} ${Math.abs(d).toFixed(1)}%</span>`;
+  }
+  return `<tr><td>${label}</td><td>${p}</td><td class="cur">${c}</td><td>${chg}</td></tr>`;
+}
+function buildCompare(M,PM,prevP){
+  const sec=$('#compareSec');
+  if(!PM||!prevP){sec.style.display='none';return;}
+  sec.style.display='';
+  $('#compareTitle').textContent=`${prevP.label} → ${DB.periods.find(p=>p.id===DB.currentId).label}`;
+  $('#cmpPrevH').textContent=prevP.label;
+  $('#cmpCurH').textContent=DB.periods.find(p=>p.id===DB.currentId).label;
+  const rows=[
+    cmpRow('Total Sales',M.totSales,PM.totSales,fUSD,'good'),
+    cmpRow('Units Sold',M.totUnits,PM.totUnits,num,'good'),
+    cmpRow('Orders',M.totOrders,PM.totOrders,num,'good'),
+    cmpRow('Visits',M.totSess,PM.totSess,num,'neutral'),
+    cmpRow('Sale Rate',M.conv,PM.conv,v=>v.toFixed(2)+'%','good'),
+    cmpRow('Avg Price / Unit',M.totUnits?M.totSales/M.totUnits:0,PM.totUnits?PM.totSales/PM.totUnits:0,fUSD2,'neutral'),
+    cmpRow('Easy Sellers',M.winners.length,PM.winners.length,num,'good'),
+    cmpRow('Needs Attention',M.rows.filter(p=>p.cls==='sink').length,PM.rows.filter(p=>p.cls==='sink').length,num,'neutral')
+  ];
+  $('#cmpBody').innerHTML=rows.join('');
+}
 function buildInsights(M,PM,prevP){
   const cards=[];
   const bySales=[...M.rows].sort((a,b)=>b.sales-a.sales);
@@ -540,11 +634,11 @@ function buildInsights(M,PM,prevP){
   const sinkSess=sinks.reduce((a,p)=>a+(p.sessions||0),0);
   const zero=M.rows.filter(p=>p.sessions!=null&&p.units===0).length;
   if(sinks.length){
-    cards.push(insCard('#A8593E',ICO.leak,'Biggest leak',`${sinks.length} traffic sink${sinks.length>1?'s':''}`,
-      `These pulled <b>${num(sinkSess)}</b> visits but sold below par. Their listing, price, or images may be losing the sale.`));
+    cards.push(insCard('#A8593E',ICO.leak,'Needs attention',`${sinks.length} product${sinks.length>1?'s':''} losing sales`,
+      `These pulled <b>${num(sinkSess)}</b> visits but sold below par. Their listing, price, or photos may be costing you the sale.`));
   }else if(zero){
-    cards.push(insCard('#A8593E',ICO.leak,'Biggest leak',`${zero} got visits, no sales`,
-      `<b>${zero}</b> products drew traffic but zero orders this period — worth a listing review.`));
+    cards.push(insCard('#A8593E',ICO.leak,'Needs attention',`${zero} got visits, no sales`,
+      `<b>${zero}</b> products drew people in but sold nothing this period — worth a listing review.`));
   }
   // 4. movement vs previous
   if(PM&&prevP){
@@ -571,6 +665,7 @@ function render(){
   $('#dash').classList.add('on');
   $('#periodSelWrap').style.display='flex';
   $('#manageBtn').style.display='inline-flex';
+  $('#exportWrap').style.display='block';
 
   const M=compute(cur.rows);
   const prevP=prevOf(cur.id);
@@ -596,15 +691,16 @@ function render(){
   // KPIs
   const vsLabel = prevP ? ('vs '+prevP.label) : '';
   const kpis=[
-    {lab:'Ordered Sales',val:fUSD(M.totSales),accent:true,d:deltaPill(M.totSales,PM&&PM.totSales,'good'),sub:fUSD2(M.totUnits?M.totSales/M.totUnits:0)+' per unit'},
-    {lab:'Units Ordered',val:num(M.totUnits),d:deltaPill(M.totUnits,PM&&PM.totUnits,'good'),sub:num(M.totOrders)+' order items'},
-    {lab:'Est. Sessions',val:num(M.totSess),d:deltaPill(M.totSess,PM&&PM.totSess,'neutral'),sub:'product page visits'},
-    {lab:'Avg Conversion',val:M.conv.toFixed(2)+'%',d:deltaPill(M.conv,PM&&PM.conv,'good'),sub:'visits that became sales'},
-    {lab:'Hidden Winners',val:String(M.winners.length),accent:true,d:deltaPill(M.winners.length,PM&&PM.winners.length,'good'),sub:'high sales · low traffic'}
+    {lab:'Total Sales',val:fUSD(M.totSales),accent:true,d:deltaPill(M.totSales,PM&&PM.totSales,'good'),sub:fUSD2(M.totUnits?M.totSales/M.totUnits:0)+' per unit'},
+    {lab:'Units Sold',val:num(M.totUnits),d:deltaPill(M.totUnits,PM&&PM.totUnits,'good'),sub:num(M.totOrders)+' orders'},
+    {lab:'Visits',val:num(M.totSess),d:deltaPill(M.totSess,PM&&PM.totSess,'neutral'),sub:'people who viewed'},
+    {lab:'Sale Rate',val:M.conv.toFixed(2)+'%',d:deltaPill(M.conv,PM&&PM.conv,'good'),sub:'visits that bought'},
+    {lab:'Easy Sellers',val:String(M.winners.length),accent:true,d:deltaPill(M.winners.length,PM&&PM.winners.length,'good'),sub:'sell well, low visits'}
   ];
   $('#kpis').innerHTML=kpis.map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="kpi-foot">${k.d}${vsLabel?`<span class="vs">${vsLabel}</span>`:''}</div><div class="sub">${k.sub}</div></div>`).join('');
 
   buildInsights(M,PM,prevP);
+  buildCompare(M,PM,prevP);
 
   // quad legend
   const order=['win','work','sink','quiet'];
@@ -624,20 +720,23 @@ function render(){
 
   buildTable(M,prevByAsin,!!prevP);
 
-  $('#foot').innerHTML=`Source: ${cur.fileName||'uploaded report'} · ${cur.rows.length} child ASINs · added ${new Date(cur.added).toLocaleDateString()}.<br>`+
-    (cur.hadSessions?'Sessions taken directly from the report.':'Sessions estimated as Units Ordered ÷ Unit-Session %.')+
-    ` ${M.noSess} product${M.noSess===1?'':'s'} had no recorded conversion.`;
+  $('#foot').innerHTML=`Source: ${cur.fileName||'uploaded report'} · ${cur.rows.length} products · added ${new Date(cur.added).toLocaleDateString()}.<br>`+
+    (cur.hadSessions?'Visits taken directly from the report.':'Visits worked out from each product\u2019s sale rate.')+
+    ` ${M.noSess} product${M.noSess===1?'':'s'} had no recorded sale rate.`;
 }
 
 /* ---------- table ---------- */
-let sortK='sales',sortDir=-1,filt='all',q='',lastM=null,lastPrev=null,lastHasPrev=false;
+let sortK='sales',sortDir=-1,filt='all',q='',lastM=null,lastPrev=null,lastHasPrev=false,deltaMetric='sales';
+const DM_FMT={sales:fUSD,units:num,usp:v=>v.toFixed(2)+'%'};
+const DM_LAB={sales:'Sales',units:'Units',usp:'Conv'};
 const COLS=[
   {k:'title',t:'Product'},{k:'units',t:'Units',fmt:num},{k:'sales',t:'Sales',fmt:fUSD},
-  {k:'delta',t:'Δ vs prev'},{k:'sessions',t:'Sessions',fmt:v=>v==null?'—':num(v)},
-  {k:'usp',t:'Conv %'},{k:'orders',t:'Orders',fmt:num},{k:'cls',t:'Segment'}
+  {k:'delta',t:'Change'},{k:'sessions',t:'Visits',fmt:v=>v==null?'—':num(v)},
+  {k:'usp',t:'Sale %'},{k:'orders',t:'Orders',fmt:num},{k:'cls',t:'Group'}
 ];
 function buildTable(M,prevByAsin,hasPrev){
   lastM=M;lastPrev=prevByAsin;lastHasPrev=hasPrev;
+  $('#deltaSeg').style.display=hasPrev?'inline-flex':'none';
   const thead=$('#thead');
   thead.innerHTML=COLS.filter(c=>c.k!=='delta'||hasPrev).map(c=>`<th data-k="${c.k}" class="${c.k===sortK?'sorted':''}">${c.t}<span class="ar">${c.k===sortK?(sortDir<0?' ▼':' ▲'):''}</span></th>`).join('');
   thead.onclick=e=>{const th=e.target.closest('th');if(!th)return;const k=th.dataset.k;if(k===sortK)sortDir*=-1;else{sortK=k;sortDir=(k==='title'||k==='cls')?1:-1;}renderRows();};
@@ -646,7 +745,7 @@ function buildTable(M,prevByAsin,hasPrev){
 function renderRows(){
   const M=lastM;if(!M)return;
   const prevByAsin=lastPrev,hasPrev=lastHasPrev;
-  const dval=p=>{const pr=prevByAsin[p.asin];return pr?p.sales-pr.sales:-Infinity;};
+  const dval=p=>{const pr=prevByAsin[p.asin];return pr?p[deltaMetric]-pr[deltaMetric]:-Infinity;};
   let rows=M.rows.filter(p=>{
     if(filt!=='all'&&p.cls!==filt)return false;
     if(q){const s=((p.title||'')+' '+(p.asin||'')).toLowerCase();if(!s.includes(q))return false;}
@@ -657,12 +756,13 @@ function renderRows(){
     else{x=a[sortK];y=b[sortK];if(x==null)x=-1;if(y==null)y=-1;}
     if(typeof x==='string')return x.localeCompare(y)*sortDir;
     return (x-y)*sortDir;});
+  const dfmt=DM_FMT[deltaMetric];
   $('#tbody').innerHTML=rows.map(p=>{
     const cells=COLS.filter(c=>c.k!=='delta'||hasPrev).map(c=>{
       if(c.k==='title')return `<td><div class="pname">${short(p.title,68)}</div><div class="pasin">${p.asin||'—'}</div></td>`;
       if(c.k==='usp')return `<td><span class="conv-chip" style="${convColor(p.usp)}">${(+p.usp).toFixed(2)}%</span></td>`;
-      if(c.k==='cls'){const C=CLASS[p.cls];return `<td><span class="tag ${C.tag}">${C.name.split(' ')[0]}</span></td>`;}
-      if(c.k==='delta'){const pr=prevByAsin[p.asin];if(!pr)return `<td class="dlt neu">new</td>`;const d=p.sales-pr.sales;const cls=Math.abs(d)<0.5?'neu':(d>0?'pos':'neg');const ar=Math.abs(d)<0.5?'·':(d>0?'▲':'▼');return `<td class="dlt ${cls}">${ar} ${fUSD(Math.abs(d))}</td>`;}
+      if(c.k==='cls'){const C=CLASS[p.cls];return `<td><span class="tag ${C.tag}">${C.short}</span></td>`;}
+      if(c.k==='delta'){const pr=prevByAsin[p.asin];if(!pr)return `<td class="dlt neu">new</td>`;const d=p[deltaMetric]-pr[deltaMetric];const small=deltaMetric==='usp'?0.05:0.5;const cls=Math.abs(d)<small?'neu':(d>0?'pos':'neg');const ar=Math.abs(d)<small?'·':(d>0?'▲':'▼');return `<td class="dlt ${cls}">${ar} ${dfmt(Math.abs(d))}</td>`;}
       return `<td>${c.fmt(p[c.k])}</td>`;
     });
     return `<tr>${cells.join('')}</tr>`;
@@ -685,16 +785,16 @@ function drawQuad(M){
     f(a.left,my,mx,a.bottom,'rgba(154,160,143,.05)');f(mx,my,a.right,a.bottom,'rgba(168,89,62,.06)');
     ctx.strokeStyle='rgba(32,35,30,.22)';ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();
     ctx.moveTo(mx,a.top);ctx.lineTo(mx,a.bottom);ctx.moveTo(a.left,my);ctx.lineTo(a.right,my);ctx.stroke();ctx.setLineDash([]);
-    ctx.font="600 11px 'JetBrains Mono'";ctx.textAlign='left';ctx.fillStyle='rgba(180,122,46,.9)';ctx.fillText('HIDDEN WINNERS',a.left+8,a.top+16);
-    ctx.textAlign='right';ctx.fillStyle='rgba(78,107,74,.85)';ctx.fillText('WORKHORSES',a.right-8,a.top+16);
-    ctx.fillStyle='rgba(168,89,62,.8)';ctx.fillText('TRAFFIC SINKS',a.right-8,a.bottom-8);
-    ctx.textAlign='left';ctx.fillStyle='rgba(150,156,140,.9)';ctx.fillText('QUIET',a.left+8,a.bottom-8);ctx.restore();}};
+    ctx.font="600 11px 'JetBrains Mono'";ctx.textAlign='left';ctx.fillStyle='rgba(180,122,46,.9)';ctx.fillText('EASY SELLERS',a.left+8,a.top+16);
+    ctx.textAlign='right';ctx.fillStyle='rgba(78,107,74,.85)';ctx.fillText('BIG SELLERS',a.right-8,a.top+16);
+    ctx.fillStyle='rgba(168,89,62,.8)';ctx.fillText('NEEDS ATTENTION',a.right-8,a.bottom-8);
+    ctx.textAlign='left';ctx.fillStyle='rgba(150,156,140,.9)';ctx.fillText('SLOW MOVERS',a.left+8,a.bottom-8);ctx.restore();}};
   charts.quad=new Chart($('#quadCanvas'),{type:'scatter',
     data:{datasets:[{data:pts,parsing:false,pointRadius:c=>4+Math.sqrt(c.raw.p.units)*0.9,pointHoverRadius:c=>6+Math.sqrt(c.raw.p.units)*0.9,
       backgroundColor:c=>CLASS[c.raw.p.cls].color+'cc',borderColor:c=>CLASS[c.raw.p.cls].color,borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:6,right:10}},
-      scales:{x:{type:'linear',min:0,max:maxX,title:{display:true,text:'SESSIONS (traffic) →',font:{size:10},color:'#8B8E82'},grid:{color:'rgba(32,35,30,.05)'},ticks:{maxTicksLimit:6}},
-        y:{type:'linear',min:0,max:maxY,title:{display:true,text:'↑ ORDERED SALES ($)',font:{size:10},color:'#8B8E82'},grid:{color:'rgba(32,35,30,.05)'},ticks:{callback:v=>'$'+(v/1000).toFixed(v<1000?1:0)+'k',maxTicksLimit:6}}},
+      scales:{x:{type:'linear',min:0,max:maxX,title:{display:true,text:'VISITS (people who viewed) →',font:{size:10},color:'#8B8E82'},grid:{color:'rgba(32,35,30,.05)'},ticks:{maxTicksLimit:6}},
+        y:{type:'linear',min:0,max:maxY,title:{display:true,text:'↑ SALES ($)',font:{size:10},color:'#8B8E82'},grid:{color:'rgba(32,35,30,.05)'},ticks:{callback:v=>'$'+(v/1000).toFixed(v<1000?1:0)+'k',maxTicksLimit:6}}},
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#20231E',padding:12,cornerRadius:9,titleFont:{family:"'Inter'",weight:'600',size:12.5},bodyFont:{size:11.5},
         callbacks:{title:c=>short(c[0].raw.p.title,52),label:c=>{const p=c.raw.p;return[`${CLASS[p.cls].name} · ${p.asin}`,`Sales ${fUSD(p.sales)}  Units ${p.units}`,`Sessions ${num(p.sessions)}  Conv ${p.usp}%`];}}}}},
     plugins:[bands]});
@@ -728,7 +828,36 @@ function drawTrend(){
 }
 
 /* ---------- ui flow ---------- */
-function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';}
+function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';}
+
+function downloadBlob(name,type,content){
+  const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},800);
+}
+function exportCSV(){
+  const cur=DB.periods.find(p=>p.id===DB.currentId);if(!cur)return;
+  const M=compute(cur.rows);
+  const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const head=['ASIN','Title','Units','Sales','Visits','Sale %','Orders','Group'];
+  const lines=[head.map(esc).join(',')];
+  M.rows.forEach(p=>lines.push([p.asin,p.title,p.units,p.sales,p.sessions==null?'':p.sessions,p.usp,p.orders,CLASS[p.cls].name].map(esc).join(',')));
+  downloadBlob((cur.label||'period').replace(/[^\w\-]+/g,'_')+'_products.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+}
+function backupAll(){
+  if(!DB.periods.length)return;
+  downloadBlob('sales-studio-backup-'+new Date().toISOString().slice(0,10)+'.json','application/json',JSON.stringify(DB));
+}
+async function restoreFrom(file){
+  try{
+    const obj=JSON.parse(await file.text());
+    if(!obj||!Array.isArray(obj.periods))throw 0;
+    const ids=new Set(DB.periods.map(p=>p.id));
+    obj.periods.forEach(p=>{if(!ids.has(p.id))DB.periods.push(p);});
+    if(!DB.currentId||!DB.periods.find(p=>p.id===DB.currentId))DB.currentId=ordered()[ordered().length-1].id;
+    await dbSave(DB);$('#mngScrim').classList.remove('on');render();
+  }catch(e){alert('That file isn\u2019t a valid backup.');}
+}
 
 function smartLabel(name){
   name=(name||'').replace(/\.(xlsx|xls|xlsm|csv|tsv|txt)$/i,'');
@@ -786,11 +915,23 @@ function openManage(){
   const o=ordered();
   $('#mngList').innerHTML=o.map(p=>{const M=compute(p.rows);
     return `<div class="mng-row${p.id===DB.currentId?' cur':''}" data-id="${p.id}">
-      <div class="mi" data-go="${p.id}" style="cursor:pointer"><div class="mn">${p.label}</div><div class="md">${fUSD(M.totSales)} · ${num(M.totUnits)} units · ${p.rows.length} products</div></div>
+      <div class="mi"><div class="mn" data-go="${p.id}" style="cursor:pointer" title="Open">${p.label}</div><div class="md">${fUSD(M.totSales)} · ${num(M.totUnits)} units · ${p.rows.length} products</div></div>
+      <button class="edit" data-edit="${p.id}" title="Rename">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      </button>
       <button class="del" data-del="${p.id}" title="Remove">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
       </button></div>`;}).join('') || '<div style="color:var(--ink-faint);padding:14px">No periods yet.</div>';
   $('#mngScrim').classList.add('on');
+}
+function startRename(id){
+  const row=document.querySelector(`.mng-row[data-id="${id}"] .mi`);
+  const p=DB.periods.find(x=>x.id===id);if(!p||!row)return;
+  row.innerHTML=`<input class="rename" type="text" value="${(p.label||'').replace(/"/g,'&quot;')}">`;
+  const inp=row.querySelector('input');inp.focus();inp.select();
+  const save=async()=>{const v=(inp.value||'').trim();if(v){p.label=v;await dbSave(DB);}openManage();render();};
+  inp.onkeydown=e=>{if(e.key==='Enter')save();if(e.key==='Escape')openManage();};
+  inp.onblur=save;
 }
 
 /* ---------- wire events ---------- */
@@ -810,6 +951,14 @@ function wire(){
   $('#barSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;barKey=b.dataset.k;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));if(lastM)drawBar(lastM);};
   $('#search').oninput=e=>{q=e.target.value.toLowerCase().trim();renderRows();};
   $('#filt').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
+  $('#deltaSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;deltaMetric=b.dataset.dm;[...e.currentTarget.querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
+
+  // export menu
+  const em=$('#exportMenu');
+  $('#exportBtn').onclick=e=>{e.stopPropagation();em.classList.toggle('on');};
+  em.onclick=e=>{const b=e.target.closest('button');if(!b)return;em.classList.remove('on');
+    if(b.dataset.x==='pdf')window.print();else if(b.dataset.x==='csv')exportCSV();};
+  document.addEventListener('click',e=>{if(!e.target.closest('#exportWrap'))em.classList.remove('on');});
 
   $('#mSave').onclick=commitPending;
   $('#mCancel').onclick=()=>{pending=null;closeModal();};
@@ -819,8 +968,12 @@ function wire(){
   $('#manageBtn').onclick=openManage;
   $('#mngClose').onclick=()=>$('#mngScrim').classList.remove('on');
   $('#mngScrim').onclick=e=>{if(e.target===$('#mngScrim'))$('#mngScrim').classList.remove('on');};
+  $('#backupBtn').onclick=backupAll;
+  $('#restoreBtn').onclick=()=>$('#restoreInput').click();
+  $('#restoreInput').onchange=e=>{if(e.target.files[0])restoreFrom(e.target.files[0]);e.target.value='';};
   $('#mngList').onclick=async e=>{
-    const del=e.target.closest('[data-del]'), go=e.target.closest('[data-go]');
+    const del=e.target.closest('[data-del]'), go=e.target.closest('[data-go]'), ed=e.target.closest('[data-edit]');
+    if(ed){startRename(ed.dataset.edit);return;}
     if(del){const id=del.dataset.del;DB.periods=DB.periods.filter(p=>p.id!==id);
       if(DB.currentId===id)DB.currentId=DB.periods.length?ordered()[ordered().length-1].id:null;
       await dbSave(DB);openManage();DB.currentId?render():showEmpty();return;}
