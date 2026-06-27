@@ -319,7 +319,7 @@
 
     <div class="next-strip" id="nextStrip">
       <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
-      <div class="ns-tx"><b>All four reports supported:</b> Sales, Returns, Ads, and Inventory. Drop any of them in and use the switch at the top-left to move between dashboards.</div>
+      <div class="ns-tx"><b>Three reports supported:</b> Sales, Returns, and Ads. Drop any of them in and use the switch at the top-left to move between dashboards. A <b>Next Shipment</b> planner is coming soon.</div>
     </div>
 
     <div class="sec" id="compareSec" style="display:none">
@@ -426,36 +426,6 @@
     </div>
 
     <footer id="aFoot"></footer>
-  </section>
-
-  <!-- inventory dashboard -->
-  <section class="dash" id="invDash">
-    <div class="period-head">
-      <div><span class="pl" style="color:var(--onyx-deep)">Inventory report</span><h2 id="iTitle">—</h2><div class="pmeta" id="iMeta"></div></div>
-      <div class="cmp-flag" id="iFlag"></div>
-    </div>
-
-    <div class="kpis" id="iKpis"></div>
-
-    <div class="glance-head"><span class="sec-num">What to do about it</span><span class="glance-sub">What to reorder, what to hold off on.</span></div>
-    <div class="insights" id="iInsights"></div>
-
-    <div class="sec" id="invChartSec">
-      <div class="sec-head"><span class="sec-num">01 — Running low</span><div class="t">Days of stock left</div>
-        <div class="d">How long each fast-mover lasts at current sales. Bars left of the dashed line will run out before a new order can arrive.</div></div>
-      <div class="panel" style="padding:16px 16px 14px"><canvas id="dosCanvas" style="width:100%!important;height:360px!important"></canvas></div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-head"><span class="sec-num">02 — Restock list</span><div class="t">Every product</div>
-        <div class="d">Sorted by urgency. <b>Reorder</b> is the suggested quantity to get back to a healthy buffer. ↩ flags a high return rate worth checking first.</div></div>
-      <table class="tbl"><thead><tr>
-        <th style="text-align:left">Product</th><th>On hand</th><th>Inbound</th><th>Sells/day</th><th>Days left</th><th>Reorder</th><th style="text-align:left">Status</th>
-      </tr></thead><tbody id="iTbody"></tbody></table>
-      <div class="tcount" id="iCount"></div>
-    </div>
-
-    <footer id="iFoot"></footer>
   </section>
 </div>
 
@@ -611,7 +581,6 @@ function detectType(aoa){
   const has=s=>h.some(x=>x.includes(s));
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
-  if(has('afnfulfillablequantity')||has('availablequantity')||has('daysofsupply')||has('recommendedreplenishment')||(has('sku')&&has('asin')&&has('price')&&!has('unitsordered')&&!has('reason')&&!has('acos')&&!has('impression'))) return 'inventory';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
   return 'unknown';
 }
@@ -965,8 +934,7 @@ function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentRetu
 
 const VIEWS={sales:{label:'Sales',list:()=>DB.periods,cur:'currentId'},
   returns:{label:'Returns',list:()=>DB.returns||[],cur:'currentReturnsId'},
-  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'},
-  inventory:{label:'Inventory',list:()=>DB.inventory||[],cur:'currentInvId'}};
+  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'}};
 function activeList(){return VIEWS[DB.view].list();}
 function activeCurId(){return DB[VIEWS[DB.view].cur];}
 function setActiveCur(id){DB[VIEWS[DB.view].cur]=id;}
@@ -1095,10 +1063,9 @@ function render(){
   $('#manageBtn').style.display='inline-flex';
   $('#exportWrap').style.display='block';
   refreshViewSwitch();
-  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');
+  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');
   if(DB.view==='returns'){$('#returnsDash').classList.add('on');renderReturns();}
   else if(DB.view==='ads'){$('#adsDash').classList.add('on');renderAds();}
-  else if(DB.view==='inventory'){$('#invDash').classList.add('on');renderInventory();}
   else{$('#dash').classList.add('on');renderSales();}
 }
 
@@ -1602,7 +1569,7 @@ function drawDaysSupply(I){
   });
 }
 
-function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
 
 function downloadBlob(name,type,content){
   const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
