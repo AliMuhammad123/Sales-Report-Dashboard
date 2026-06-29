@@ -385,6 +385,12 @@
         <div class="panel" style="padding:18px"><canvas id="dispoCanvas" style="width:100%!important;height:300px!important"></canvas></div></div>
     </div>
 
+    <div class="sec" id="fcSec" style="display:none">
+      <div class="sec-head"><span class="sec-num">Likely claimable</span><div class="t">Damaged by Amazon</div>
+        <div class="d">These came back marked "damaged in the warehouse" — usually eligible for an FBA reimbursement claim. File these in Seller Central.</div></div>
+      <div class="panel win-list" id="fcList"></div>
+    </div>
+
     <div class="sec">
       <div class="sec-head"><span class="sec-num">03 — Flag list</span><div class="t">Products coming back</div>
         <div class="d">Sorted by return rate. <b>High</b> = 15%+ of units sold came back; <b>Watch</b> = 8%+. Add a Sales period to fill in the rate.</div></div>
@@ -672,7 +678,11 @@ function computeReturns(rows,salesRows){
   const reasonsArr=Object.entries(byReason).map(([k,v])=>({label:k,qty:v})).sort((a,b)=>b.qty-a.qty);
   const dispoArr=Object.entries(byDispo).map(([k,v])=>({label:k,qty:v})).sort((a,b)=>b.qty-a.qty);
   const dates=rows.map(r=>r.date).filter(Boolean).sort();
-  return {totQty,reasonsArr,dispoArr,products,sellable,fcDamaged,overallRate,totUnitsSold,
+  // products damaged in Amazon's warehouse (likely reimbursable)
+  const fcMap={};
+  rows.forEach(r=>{if(/DAMAGED_BY_FC/i.test(r.reason)){const k=r.asin||r.name;if(!fcMap[k])fcMap[k]={asin:r.asin,name:r.name,qty:0};fcMap[k].qty+=r.qty;}});
+  const fcProducts=Object.values(fcMap).sort((a,b)=>b.qty-a.qty);
+  return {totQty,reasonsArr,dispoArr,products,sellable,fcDamaged,fcProducts,overallRate,totUnitsSold,
     recoverVal,topReason:reasonsArr[0],hasSales:!!salesRows,
     dateFrom:dates[0]||'',dateTo:dates[dates.length-1]||'',
     comments:rows.filter(r=>r.comment).map(r=>({asin:r.asin,name:r.name,reason:reasonLabel(r.reason),comment:r.comment}))};
@@ -1347,6 +1357,13 @@ function renderReturns(){
     $('#commentsSec').style.display='';
     $('#rComments').innerHTML=R.comments.slice(0,12).map(c=>`<div class="cmt"><div class="cmt-q">“${esc(c.comment)}”</div><div class="cmt-m">${c.reason} · ${short(c.name||c.asin,40)}</div></div>`).join('');
   }else $('#commentsSec').style.display='none';
+
+  if(R.fcProducts&&R.fcProducts.length){
+    $('#fcSec').style.display='';
+    $('#fcList').innerHTML=R.fcProducts.map((p,i)=>`<div class="win"><div class="rk">${p.qty}</div>
+      <div class="nm">${short(p.name||p.asin,60)}<span class="as">${p.asin||'—'}</span></div>
+      <div class="mt"><div class="big" style="font-size:13px;color:var(--clay)">${p.qty} damaged</div><div class="sm">claim in Seller Central</div></div></div>`).join('');
+  }else $('#fcSec').style.display='none';
 
   $('#rFoot').innerHTML=`Source: ${cur.fileName||'returns report'} · ${cur.rows.length} return lines · added ${new Date(cur.added).toLocaleDateString()}.`+
     (R.hasSales?'':'<br>Switch on a Sales period (top-left) to calculate return rates.');
