@@ -226,6 +226,15 @@
   .cmt-q{font-size:13.5px;line-height:1.5;color:var(--ink)}
   .cmt-m{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-top:9px}
 
+  /* shipment planner */
+  .days-ctrl{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:inline-flex;align-items:center;gap:8px}
+  .days-ctrl input{width:64px;padding:7px 9px;border:1px solid var(--vein);border-radius:8px;background:var(--surface);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--ink);text-align:center}
+  .days-ctrl input:focus{outline:2px solid var(--onyx);outline-offset:-1px}
+  .carton-cell{padding:6px 10px!important}
+  .carton-in{width:74px;padding:7px 9px;border:1px solid var(--vein);border-radius:8px;background:var(--surface-2);font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);text-align:center}
+  .carton-in:focus{outline:2px solid var(--onyx);outline-offset:-1px;background:var(--surface)}
+  .carton-in::placeholder{color:var(--ink-faint);font-style:italic}
+
   /* comparison table */
   .cmp-tbl{width:100%;border-collapse:collapse}
   .cmp-tbl thead th{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);text-align:right;padding:13px 18px;border-bottom:1px solid var(--vein);background:var(--surface-2)}
@@ -264,10 +273,7 @@
     <div class="glyph"></div>
     <div><div class="bt">Sales Studio</div><div class="bs">marble · onyx · stone</div></div>
   </div>
-  <div class="view-switch" id="viewSwitch" style="display:none">
-    <button data-v="sales" class="on">Sales</button>
-    <button data-v="returns">Returns</button>
-  </div>
+  <div class="view-switch" id="viewSwitch" style="display:none"></div>
   <div class="periodsel" id="periodSelWrap" style="display:none">
     <label>Period</label>
     <select class="psel" id="periodSel"></select>
@@ -319,7 +325,7 @@
 
     <div class="next-strip" id="nextStrip">
       <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
-      <div class="ns-tx"><b>Three reports supported:</b> Sales, Returns, and Ads. Drop any of them in and use the switch at the top-left to move between dashboards. A <b>Next Shipment</b> planner is coming soon.</div>
+      <div class="ns-tx"><b>Four tools in one:</b> Sales, Returns, Ads, and a <b>Shipment Planner</b>. Drop any report in and use the switch at the top-left to move between them.</div>
     </div>
 
     <div class="sec" id="compareSec" style="display:none">
@@ -426,6 +432,34 @@
     </div>
 
     <footer id="aFoot"></footer>
+  </section>
+
+  <!-- shipment planner dashboard -->
+  <section class="dash" id="planDash">
+    <div class="period-head">
+      <div><span class="pl" style="color:var(--onyx-deep)">Shipment plan</span><h2 id="pTitle">—</h2><div class="pmeta" id="pMeta"></div></div>
+      <div class="cmp-flag" id="pFlag"></div>
+    </div>
+
+    <div class="kpis" id="pKpis"></div>
+
+    <div class="glance-head">
+      <span class="sec-num">What to ship</span>
+      <span class="glance-sub">Based on velocity × target days, in full cartons only.</span>
+      <span class="days-ctrl">Target days <input id="pDays" type="number" min="1" step="1" value="70"></span>
+    </div>
+    <div class="insights" id="pInsights"></div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="sec-num">The plan</span><div class="t">Next shipment</div>
+        <div class="d">Set <b>units per carton</b> for each product once — it's saved and reused next time. Products marked <b>Ship</b> go in this shipment. Use <b>Export</b> for the filled sheet.</div></div>
+      <table class="tbl"><thead><tr>
+        <th style="text-align:left">Product</th><th>Velocity</th><th>FBA stock</th><th>Need (70d)</th><th>To move</th><th>Units/carton</th><th>Cartons</th><th>Ship</th><th>Units</th><th style="text-align:left">Status</th>
+      </tr></thead><tbody id="pTbody"></tbody></table>
+      <div class="tcount" id="pCount"></div>
+    </div>
+
+    <footer id="pFoot"></footer>
   </section>
 </div>
 
@@ -581,6 +615,7 @@ function detectType(aoa){
   const has=s=>h.some(x=>x.includes(s));
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
+  if(has('salesvelocity')||has('estimatedsalesvelocity')) return 'planner';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
   return 'unknown';
 }
@@ -752,7 +787,66 @@ function computeAds(rows){
     hasAsin:rows.some(r=>r.asin)};
 }
 
-/* ---------- INVENTORY ---------- */
+/* ---------- SHIPMENT PLANNER ---------- */
+const PLAN_DEFAULT_DAYS=70;
+const CARTON_THRESHOLD=0.4;
+function parsePlanner(aoa){
+  const hi=headerRow(aoa);
+  const header=aoa[hi].map(norm);
+  const find=preds=>{for(const p of preds){const i=header.findIndex(p);if(i>=0)return i;}return -1;};
+  const col={
+    asin:find([h=>h==='asin',h=>h.includes('asin')]),
+    sku:find([h=>h==='sku',h=>h.includes('sellersku'),h=>h.includes('sku')]),
+    fnsku:find([h=>h.includes('fnsku')]),
+    name:find([h=>h.includes('productname'),h=>h==='title',h=>h.includes('title'),h=>h.includes('name')]),
+    vel:find([h=>h.includes('estimatedsalesvelocity'),h=>h.includes('salesvelocity'),h=>h.includes('velocity')]),
+    stock:find([h=>h.includes('fbafbmstock'),h=>h.includes('availableamazoninventory'),h=>h.includes('fbastock'),h=>h.includes('available'),h=>h==='stock',h=>h.includes('stock')]),
+    uib:find([h=>h.includes('unitsinbox'),h=>h.includes('unitspercarton'),h=>h.includes('unitsperbox'),h=>h.includes('boxparamunits'),h=>h.includes('carton')])
+  };
+  if(col.vel<0||col.stock<0) throw new Error("This needs a Seller Board inventory report with Sales Velocity and FBA stock columns.");
+  const rows=[];
+  for(let i=hi+1;i<aoa.length;i++){
+    const r=aoa[i];if(!r||!r.length)continue;
+    const asin=col.asin>=0?String(r[col.asin]||'').trim():'';
+    const sku=col.sku>=0?String(r[col.sku]||'').trim():'';
+    const fnsku=col.fnsku>=0?String(r[col.fnsku]||'').trim():'';
+    if(!asin&&!sku&&!fnsku)continue;
+    rows.push({
+      asin,sku,fnsku,
+      name:col.name>=0?String(r[col.name]||'').trim():'',
+      vel:col.vel>=0?toMoney(r[col.vel]):0,
+      stock:col.stock>=0?toInt(r[col.stock]):0,
+      uib:col.uib>=0?toInt(r[col.uib]):0
+    });
+  }
+  if(!rows.length) throw new Error("No product rows found in the report.");
+  return {rows};
+}
+function planKey(it){return it.asin||it.fnsku||it.sku;}
+function shipRound(raw){if(raw==null||raw<=0)return 0;const w=Math.floor(raw);return w+((raw-w)>CARTON_THRESHOLD?1:0);}
+function computePlanner(rows,cartons,days){
+  cartons=cartons||{};days=days||PLAN_DEFAULT_DAYS;
+  const items=rows.map(r=>{
+    const key=planKey(r);
+    const carton=(cartons[key]!=null&&cartons[key]>0)?cartons[key]:(r.uib>0?r.uib:null);
+    const required=Math.round(r.vel*days);
+    const toMove=Math.max(0,required-r.stock);
+    const raw=carton?toMove/carton:null;
+    const ship=shipRound(raw);
+    const unitsToShip=carton?ship*carton:0;
+    const needsCarton=toMove>0&&!carton;
+    return {...r,key,carton,required,toMove,raw,ship,unitsToShip,needsCarton,inShip:ship>0};
+  });
+  const productsToShip=items.filter(i=>i.inShip).length;
+  const totalCartons=items.reduce((a,i)=>a+i.ship,0);
+  const totalUnits=items.reduce((a,i)=>a+i.unitsToShip,0);
+  const needCarton=items.filter(i=>i.needsCarton).length;
+  const outStock=items.filter(i=>i.vel>0&&i.stock<=0).length;
+  const needAtt=items.filter(i=>i.toMove>0).length;
+  return {items,days,productsToShip,totalCartons,totalUnits,needCarton,outStock,needAtt};
+}
+
+/* ---------- INVENTORY (legacy, unused) ---------- */
 const INV_DAYS=30;   // sales report assumed to cover ~30 days
 const INV_LEAD=30;   // days it takes to restock
 const INV_COVER=60;  // target days of stock to hold
@@ -920,7 +1014,7 @@ function compute(rows){
 }
 
 /* ---------- state ---------- */
-let DB={periods:[],returns:[],ads:[],inventory:[],currentId:null,currentReturnsId:null,currentAdsId:null,currentInvId:null,view:'sales'};
+let DB={periods:[],returns:[],ads:[],inventory:[],planner:[],cartons:{},targetDays:70,currentId:null,currentReturnsId:null,currentAdsId:null,currentInvId:null,currentPlanId:null,view:'sales'};
 let charts={};
 let pending=null; // {type, label, rows, fileName, hadSessions}
 
@@ -929,12 +1023,14 @@ function prevOf(id){const o=ordered();const i=o.findIndex(p=>p.id===id);return i
 function orderedReturns(){return [...(DB.returns||[])].sort((a,b)=>a.added-b.added);}
 function orderedAds(){return [...(DB.ads||[])].sort((a,b)=>a.added-b.added);}
 function orderedInv(){return [...(DB.inventory||[])].sort((a,b)=>a.added-b.added);}
+function orderedPlan(){return [...(DB.planner||[])].sort((a,b)=>a.added-b.added);}
 function curSalesRows(){const p=DB.periods.find(x=>x.id===DB.currentId);return p?p.rows:null;}
 function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentReturnsId);return p?p.rows:null;}
 
 const VIEWS={sales:{label:'Sales',list:()=>DB.periods,cur:'currentId'},
   returns:{label:'Returns',list:()=>DB.returns||[],cur:'currentReturnsId'},
-  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'}};
+  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'},
+  planner:{label:'Shipment',list:()=>DB.planner||[],cur:'currentPlanId'}};
 function activeList(){return VIEWS[DB.view].list();}
 function activeCurId(){return DB[VIEWS[DB.view].cur];}
 function setActiveCur(id){DB[VIEWS[DB.view].cur]=id;}
@@ -1063,9 +1159,10 @@ function render(){
   $('#manageBtn').style.display='inline-flex';
   $('#exportWrap').style.display='block';
   refreshViewSwitch();
-  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');
+  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#planDash').classList.remove('on');
   if(DB.view==='returns'){$('#returnsDash').classList.add('on');renderReturns();}
   else if(DB.view==='ads'){$('#adsDash').classList.add('on');renderAds();}
+  else if(DB.view==='planner'){$('#planDash').classList.add('on');renderPlanner();}
   else{$('#dash').classList.add('on');renderSales();}
 }
 
@@ -1569,7 +1666,78 @@ function drawDaysSupply(I){
   });
 }
 
-function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#planDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+
+/* ---------- shipment planner dashboard ---------- */
+let lastP=null;
+function renderPlanner(){
+  const cur=(DB.planner||[]).find(p=>p.id===DB.currentPlanId)||orderedPlan()[orderedPlan().length-1];
+  if(!cur){DB.view='sales';return render();}
+  DB.currentPlanId=cur.id;
+  const days=DB.targetDays||PLAN_DEFAULT_DAYS;
+  const P=computePlanner(cur.rows,DB.cartons,days);
+  lastP=P;
+
+  $('#periodSel').innerHTML=orderedPlan().map(p=>`<option value="${p.id}"${p.id===cur.id?' selected':''}>${p.label}</option>`).join('');
+  $('#pTitle').textContent=cur.label;
+  $('#pMeta').textContent=`${P.items.length} products · ${cur.fileName||'report'}`;
+  $('#pDays').value=days;
+  $('#pFlag').innerHTML=`Target <b>${days} days</b> of stock · full cartons only`;
+
+  const kp=[
+    {lab:'Products To Ship',val:num(P.productsToShip),accent:true,sub:'go in next shipment'},
+    {lab:'Cartons To Ship',val:num(P.totalCartons),accent:true,sub:'full jumbo cartons'},
+    {lab:'Units To Ship',val:num(P.totalUnits),sub:'across all cartons'},
+    {lab:'Need Carton Size',val:num(P.needCarton),sub:P.needCarton?'enter to complete':'all set'},
+    {lab:'Out Of Stock',val:num(P.outStock),sub:'selling, zero stock'}
+  ];
+  $('#pKpis').innerHTML=kp.map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
+
+  buildPlanInsights(P);
+
+  // table — ship list first, then needs-carton, then rest
+  const rank=i=>i.inShip?0:(i.needsCarton?1:(i.toMove>0?2:3));
+  const sorted=[...P.items].sort((a,b)=>rank(a)-rank(b)||b.ship-a.ship||b.toMove-a.toMove);
+  $('#pTbody').innerHTML=sorted.map(it=>{
+    const cartonInput=`<input class="carton-in" type="number" min="0" step="1" data-key="${it.key}" value="${it.carton!=null?it.carton:''}" placeholder="set">`;
+    const shipCell=it.inShip?`<b style="color:var(--onyx-deep)">${it.ship}</b>`:(it.needsCarton?'<span class="muted">—</span>':(it.toMove>0?'0':'—'));
+    const stTag=it.inShip?'<span class="tag t-work">Ship</span>':(it.needsCarton?'<span class="tag t-win">Set carton</span>':(it.toMove>0?'<span class="tag t-quiet">Hold</span>':'<span class="tag t-quiet">OK</span>'));
+    return `<tr><td><div class="pname">${short(it.name||it.asin,52)}</div><div class="pasin">${it.asin||it.fnsku||it.sku}</div></td>
+      <td>${it.vel?it.vel.toFixed(2):'0'}</td><td>${num(it.stock)}</td><td>${num(it.required)}</td><td>${it.toMove?'<b>'+num(it.toMove)+'</b>':'0'}</td>
+      <td class="carton-cell">${cartonInput}</td>
+      <td>${it.raw!=null?it.raw.toFixed(2):'—'}</td><td>${shipCell}</td><td>${it.unitsToShip?num(it.unitsToShip):'—'}</td>
+      <td>${stTag}</td></tr>`;
+  }).join('');
+  $('#pCount').textContent=`${P.items.length} products · ${P.needAtt} need topping up`;
+
+  $('#pFoot').innerHTML=`Source: ${cur.fileName||'inventory report'} · ${cur.rows.length} rows · added ${new Date(cur.added).toLocaleDateString()}.<br>`+
+    `Required = velocity × ${days}. To move = required − FBA stock. Cartons = to move ÷ units-per-carton, rounded up when the remainder is over ${CARTON_THRESHOLD}. Carton sizes you enter are saved and reused next time.`;
+}
+function buildPlanInsights(P){
+  const cards=[];
+  const big=[...P.items].filter(i=>i.inShip).sort((a,b)=>b.ship-a.ship)[0];
+  if(big){
+    cards.push(insCard('#4E6B4A',ICO.bolt,'Biggest shipment',short(big.name||big.asin,38),
+      `Ship <b>${big.ship}</b> carton${big.ship>1?'s':''} (${num(big.unitsToShip)} units) to reach ${P.days} days of cover.`));
+  }else if(P.needCarton){
+    cards.push(insCard('#B47A2E',ICO.star,'Almost there','Enter carton sizes',
+      `${P.needCarton} products need topping up but don\u2019t have a units-per-carton yet. Add them in the table and the boxes calculate instantly.`));
+  }else{
+    cards.push(insCard('#4E6B4A',ICO.bolt,'Well stocked','Nothing urgent',
+      `No products fall below ${P.days} days of cover right now.`));
+  }
+  if(P.needCarton&&big){
+    cards.push(insCard('#B47A2E',ICO.star,'Enter to complete',`${P.needCarton} missing carton size`,
+      `These need shipping but have no units-per-carton set. Fill the box in the table — it\u2019s saved for next time.`));
+  }
+  if(P.outStock){
+    cards.push(insCard('#A8593E',ICO.leak,'Out of stock',`${P.outStock} selling with zero stock`,
+      `These are selling but show no FBA inventory — prioritise them in this shipment.`));
+  }
+  cards.push(insCard('#6E7468',ICO.trend,'This shipment',`${num(P.totalCartons)} cartons · ${num(P.totalUnits)} units`,
+    `Across <b>${P.productsToShip}</b> products, to hold roughly <b>${P.days} days</b> of stock at current sales speed.`));
+  $('#pInsights').innerHTML=cards.slice(0,4).join('');
+}
 
 function downloadBlob(name,type,content){
   const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
@@ -1597,14 +1765,14 @@ function exportCSV(){
     downloadBlob((cur.label||'ads').replace(/[^\w\-]+/g,'_')+'_ads.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
     return;
   }
-  if(DB.view==='inventory'){
-    const cur=(DB.inventory||[]).find(p=>p.id===DB.currentInvId);if(!cur)return;
-    const I=computeInventory(cur.rows,curSalesRows(),curReturnsRows(),cur.hasStock);
+  if(DB.view==='planner'){
+    const cur=(DB.planner||[]).find(p=>p.id===DB.currentPlanId);if(!cur)return;
+    const P=computePlanner(cur.rows,DB.cartons,DB.targetDays||PLAN_DEFAULT_DAYS);
     const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-    const head=['ASIN','SKU','Product','On Hand','Inbound','Units/Day','Days Left','Reorder','Status','Return %'];
+    const head=['ASIN','SKU','FNSKU','Product Name','FBA Stock','Sales Velocity','Qty As per Velocity','To Move','Units per Carton','No of Boxes','Boxes To Ship','Units To Ship'];
     const lines=[head.map(esc).join(',')];
-    I.items.forEach(it=>lines.push([it.asin,it.sku,it.name,it.avail==null?'':it.avail,it.inbound,it.velocity.toFixed(2),it.dos==null?'':(it.dos===Infinity?'inf':Math.round(it.dos)),it.reorder,INV_ST[it.st].name,it.retRate==null?'':it.retRate.toFixed(0)].map(esc).join(',')));
-    downloadBlob((cur.label||'inventory').replace(/[^\w\-]+/g,'_')+'_inventory.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+    P.items.forEach(it=>lines.push([it.asin,it.sku,it.fnsku,it.name,it.stock,it.vel,it.required,it.toMove,it.carton==null?'':it.carton,it.raw==null?'':it.raw.toFixed(4),it.ship,it.unitsToShip].map(esc).join(',')));
+    downloadBlob((cur.label||'shipment').replace(/[^\w\-]+/g,'_')+'_plan.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
     return;
   }
   const cur=DB.periods.find(p=>p.id===DB.currentId);if(!cur)return;
@@ -1616,25 +1784,27 @@ function exportCSV(){
   downloadBlob((cur.label||'period').replace(/[^\w\-]+/g,'_')+'_products.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
 }
 function backupAll(){
-  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.inventory||[]).length)return;
+  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.planner||[]).length)return;
   downloadBlob('sales-studio-backup-'+new Date().toISOString().slice(0,10)+'.json','application/json',JSON.stringify(DB));
 }
 async function restoreFrom(file){
   try{
     const obj=JSON.parse(await file.text());
-    if(!obj||(!Array.isArray(obj.periods)&&!Array.isArray(obj.returns)&&!Array.isArray(obj.ads)&&!Array.isArray(obj.inventory)))throw 0;
+    if(!obj||(!Array.isArray(obj.periods)&&!Array.isArray(obj.returns)&&!Array.isArray(obj.ads)&&!Array.isArray(obj.planner)))throw 0;
     const sIds=new Set(DB.periods.map(p=>p.id));
     (obj.periods||[]).forEach(p=>{if(!sIds.has(p.id))DB.periods.push(p);});
     DB.returns=DB.returns||[];const rIds=new Set(DB.returns.map(p=>p.id));
     (obj.returns||[]).forEach(p=>{if(!rIds.has(p.id))DB.returns.push(p);});
     DB.ads=DB.ads||[];const aIds=new Set(DB.ads.map(p=>p.id));
     (obj.ads||[]).forEach(p=>{if(!aIds.has(p.id))DB.ads.push(p);});
-    DB.inventory=DB.inventory||[];const iIds=new Set(DB.inventory.map(p=>p.id));
-    (obj.inventory||[]).forEach(p=>{if(!iIds.has(p.id))DB.inventory.push(p);});
+    DB.planner=DB.planner||[];const pIds=new Set(DB.planner.map(p=>p.id));
+    (obj.planner||[]).forEach(p=>{if(!pIds.has(p.id))DB.planner.push(p);});
+    if(obj.cartons)DB.cartons=Object.assign({},obj.cartons,DB.cartons);
+    if(obj.targetDays&&!DB.targetDays)DB.targetDays=obj.targetDays;
     if(!DB.currentId&&DB.periods.length)DB.currentId=ordered()[ordered().length-1].id;
     if(!DB.currentReturnsId&&DB.returns.length)DB.currentReturnsId=orderedReturns()[orderedReturns().length-1].id;
     if(!DB.currentAdsId&&DB.ads.length)DB.currentAdsId=orderedAds()[orderedAds().length-1].id;
-    if(!DB.currentInvId&&DB.inventory.length)DB.currentInvId=orderedInv()[orderedInv().length-1].id;
+    if(!DB.currentPlanId&&DB.planner.length)DB.currentPlanId=orderedPlan()[orderedPlan().length-1].id;
     await dbSave(DB);$('#mngScrim').classList.remove('on');render();
   }catch(e){alert('That file isn\u2019t a valid backup.');}
 }
@@ -1661,14 +1831,11 @@ function openAddModal(type,rows,fileName,extra){
     $('#mTitle').textContent='Name this Ads report';
     $('#mDesc').textContent='A label you\u2019ll recognise — the period it covers works well.';
     $('#mInfo').innerHTML=`Found <b>${A.groups.length}</b> ad groups · <b>${fUSD(A.totSpend)}</b> spend → <b>${fUSD(A.totSales)}</b> sales at <b>${A.acos.toFixed(1)}%</b> ACOS.`;
-  }else if(type==='inventory'){
-    const hasStock=extra&&extra.hasStock;
-    const I=computeInventory(rows,curSalesRows(),curReturnsRows(),hasStock);
-    $('#mTitle').textContent='Name this Inventory report';
+  }else if(type==='planner'){
+    const P=computePlanner(rows,DB.cartons,DB.targetDays||PLAN_DEFAULT_DAYS);
+    $('#mTitle').textContent='Name this Shipment plan';
     $('#mDesc').textContent='A label you\u2019ll recognise — today\u2019s date works well.';
-    $('#mInfo').innerHTML=hasStock
-      ? `Found <b>${num(I.items.length)}</b> products · <b>${num(I.totUnits)}</b> units on hand. <b>${I.out+I.urgent}</b> need restocking.`
-      : `Found <b>${num(I.items.length)}</b> products. <span class="err">This file has no stock levels</span> — I\u2019ll show your catalog, but for restock numbers upload the FBA inventory report.`;
+    $('#mInfo').innerHTML=`Found <b>${num(P.items.length)}</b> products · <b>${P.needAtt}</b> need topping up to ${P.days} days. ${P.needCarton?`<b>${P.needCarton}</b> still need a carton size.`:'Carton sizes ready.'}`;
   }else{
     const M=compute(rows);
     $('#mTitle').textContent='Name this Sales period';
@@ -1702,9 +1869,9 @@ async function handleFiles(files){
     }else if(type==='ads'){
       const {rows}=parseAds(aoa);
       openAddModal('ads',rows,file.name);
-    }else if(type==='inventory'){
-      const {rows,hasStock}=parseInventory(aoa);
-      openAddModal('inventory',rows,file.name,{hasStock});
+    }else if(type==='planner'){
+      const {rows}=parsePlanner(aoa);
+      openAddModal('planner',rows,file.name);
     }else if(type==='sales'){
       const {rows,hadSessions}=mapColumns(aoa);
       openAddModal('sales',rows,file.name,{hadSessions});
@@ -1727,10 +1894,10 @@ async function commitPending(){
     DB.ads=DB.ads||[];
     DB.ads.push({id,label,added:Date.now(),fileName:pending.fileName,rows:pending.rows});
     DB.currentAdsId=id;DB.view='ads';
-  }else if(pending.type==='inventory'){
-    DB.inventory=DB.inventory||[];
-    DB.inventory.push({id,label,added:Date.now(),fileName:pending.fileName,rows:pending.rows,hasStock:pending.extra&&pending.extra.hasStock});
-    DB.currentInvId=id;DB.view='inventory';
+  }else if(pending.type==='planner'){
+    DB.planner=DB.planner||[];
+    DB.planner.push({id,label,added:Date.now(),fileName:pending.fileName,rows:pending.rows});
+    DB.currentPlanId=id;DB.view='planner';
   }else{
     DB.periods.push({id,label,added:Date.now(),fileName:pending.fileName,hadSessions:pending.extra&&pending.extra.hadSessions,rows:pending.rows});
     DB.currentId=id;DB.view='sales';
@@ -1745,7 +1912,7 @@ function openManage(){
     let sub;
     if(DB.view==='returns'){const R=computeReturns(p.rows,curSalesRows());sub=`${num(R.totQty)} returns · ${p.rows.length} lines`;}
     else if(DB.view==='ads'){const A=computeAds(p.rows);sub=`${fUSD(A.totSpend)} spend · ${A.acos.toFixed(1)}% ACOS · ${A.groups.length} groups`;}
-    else if(DB.view==='inventory'){const I=computeInventory(p.rows,curSalesRows(),curReturnsRows(),p.hasStock);sub=p.hasStock?`${num(I.totUnits)} units · ${I.out+I.urgent} to restock`:`${I.items.length} products · no stock data`;}
+    else if(DB.view==='planner'){const P=computePlanner(p.rows,DB.cartons,DB.targetDays||PLAN_DEFAULT_DAYS);sub=`${P.totalCartons} cartons · ${P.productsToShip} products to ship`;}
     else{const M=compute(p.rows);sub=`${fUSD(M.totSales)} · ${num(M.totUnits)} units · ${p.rows.length} products`;}
     return `<div class="mng-row${p.id===curId?' cur':''}" data-id="${p.id}">
       <div class="mi"><div class="mn" data-go="${p.id}" style="cursor:pointer" title="Open">${p.label}</div><div class="md">${sub}</div></div>
@@ -1755,7 +1922,7 @@ function openManage(){
       <button class="del" data-del="${p.id}" title="Remove">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
       </button></div>`;}).join('') || '<div style="color:var(--ink-faint);padding:14px">No '+(isR?'returns reports':'periods')+' yet.</div>';
-  $('#mngTitle').textContent={returns:'Saved returns reports',ads:'Saved ads reports',inventory:'Saved inventory reports'}[DB.view]||'Saved sales periods';
+  $('#mngTitle').textContent={returns:'Saved returns reports',ads:'Saved ads reports',planner:'Saved shipment plans'}[DB.view]||'Saved sales periods';
   $('#mngScrim').classList.add('on');
 }
 function findActive(id){return activeList().find(x=>x.id===id);}
@@ -1789,6 +1956,18 @@ function wire(){
   $('#filt').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
   $('#deltaSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;deltaMetric=b.dataset.dm;[...e.currentTarget.querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
 
+  // shipment planner: carton size inputs + target days
+  $('#pTbody').addEventListener('change',e=>{
+    const inp=e.target.closest('.carton-in');if(!inp)return;
+    const key=inp.dataset.key;const v=parseInt(inp.value);
+    DB.cartons=DB.cartons||{};
+    if(v>0)DB.cartons[key]=v; else delete DB.cartons[key];
+    dbSave(DB);renderPlanner();
+  });
+  $('#pDays').addEventListener('change',e=>{
+    let v=parseInt(e.target.value);if(!(v>0))v=70;DB.targetDays=v;dbSave(DB);renderPlanner();
+  });
+
   // export menu
   const em=$('#exportMenu');
   $('#exportBtn').onclick=e=>{e.stopPropagation();em.classList.toggle('on');};
@@ -1813,10 +1992,10 @@ function wire(){
     if(del){const id=del.dataset.del;
       if(DB.view==='returns'){DB.returns=(DB.returns||[]).filter(p=>p.id!==id);if(DB.currentReturnsId===id)DB.currentReturnsId=DB.returns.length?orderedReturns()[orderedReturns().length-1].id:null;}
       else if(DB.view==='ads'){DB.ads=(DB.ads||[]).filter(p=>p.id!==id);if(DB.currentAdsId===id)DB.currentAdsId=DB.ads.length?orderedAds()[orderedAds().length-1].id:null;}
-      else if(DB.view==='inventory'){DB.inventory=(DB.inventory||[]).filter(p=>p.id!==id);if(DB.currentInvId===id)DB.currentInvId=DB.inventory.length?orderedInv()[orderedInv().length-1].id:null;}
+      else if(DB.view==='planner'){DB.planner=(DB.planner||[]).filter(p=>p.id!==id);if(DB.currentPlanId===id)DB.currentPlanId=DB.planner.length?orderedPlan()[orderedPlan().length-1].id:null;}
       else{DB.periods=DB.periods.filter(p=>p.id!==id);if(DB.currentId===id)DB.currentId=DB.periods.length?ordered()[ordered().length-1].id:null;}
       await dbSave(DB);
-      const stillHas=(DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length);
+      const stillHas=(DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.planner||[]).length);
       openManage();stillHas?render():showEmpty();return;}
     if(go){setActiveCur(go.dataset.go);await dbSave(DB);$('#mngScrim').classList.remove('on');render();}
   };
@@ -1826,14 +2005,14 @@ function wire(){
 (async function(){
   wire();
   const loaded=await dbLoad();
-  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.inventory&&loaded.inventory.length))){
+  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.planner&&loaded.planner.length))){
     DB=loaded;
-    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.inventory=DB.inventory||[];
+    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.planner=DB.planner||[];DB.cartons=DB.cartons||{};DB.targetDays=DB.targetDays||70;
     if(!DB.view||!presentViews().includes(DB.view))DB.view=presentViews()[0]||'sales';
     if(DB.periods.length&&!DB.periods.find(p=>p.id===DB.currentId))DB.currentId=ordered()[ordered().length-1].id;
     if(DB.returns.length&&!DB.returns.find(p=>p.id===DB.currentReturnsId))DB.currentReturnsId=orderedReturns()[orderedReturns().length-1].id;
     if(DB.ads.length&&!DB.ads.find(p=>p.id===DB.currentAdsId))DB.currentAdsId=orderedAds()[orderedAds().length-1].id;
-    if(DB.inventory.length&&!DB.inventory.find(p=>p.id===DB.currentInvId))DB.currentInvId=orderedInv()[orderedInv().length-1].id;
+    if(DB.planner.length&&!DB.planner.find(p=>p.id===DB.currentPlanId))DB.currentPlanId=orderedPlan()[orderedPlan().length-1].id;
     render();
   }
   else showEmpty();
