@@ -325,7 +325,7 @@
 
     <div class="next-strip" id="nextStrip">
       <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
-      <div class="ns-tx"><b>Four tools in one:</b> Sales, Returns, Ads, and a <b>Shipment Planner</b>. Drop any report in and use the switch at the top-left to move between them.</div>
+      <div class="ns-tx"><b>Three tools in one:</b> Sales, Returns, and Ads. Drop any report in and use the switch at the top-left to move between dashboards.</div>
     </div>
 
     <div class="sec" id="compareSec" style="display:none">
@@ -432,34 +432,6 @@
     </div>
 
     <footer id="aFoot"></footer>
-  </section>
-
-  <!-- shipment planner dashboard -->
-  <section class="dash" id="planDash">
-    <div class="period-head">
-      <div><span class="pl" style="color:var(--onyx-deep)">Shipment plan</span><h2 id="pTitle">—</h2><div class="pmeta" id="pMeta"></div></div>
-      <div class="cmp-flag" id="pFlag"></div>
-    </div>
-
-    <div class="kpis" id="pKpis"></div>
-
-    <div class="glance-head">
-      <span class="sec-num">What to ship</span>
-      <span class="glance-sub">Based on velocity × target days, in full cartons only.</span>
-      <span class="days-ctrl">Target days <input id="pDays" type="number" min="1" step="1" value="70"></span>
-    </div>
-    <div class="insights" id="pInsights"></div>
-
-    <div class="sec">
-      <div class="sec-head"><span class="sec-num">The plan</span><div class="t">Next shipment</div>
-        <div class="d">Set <b>units per carton</b> for each product once — it's saved and reused next time. Products marked <b>Ship</b> go in this shipment. Use <b>Export</b> for the filled sheet.</div></div>
-      <table class="tbl"><thead><tr>
-        <th style="text-align:left">Product</th><th>Velocity</th><th>FBA stock</th><th>Need (70d)</th><th>To move</th><th>Units/carton</th><th>Cartons</th><th>Ship</th><th>Units</th><th style="text-align:left">Status</th>
-      </tr></thead><tbody id="pTbody"></tbody></table>
-      <div class="tcount" id="pCount"></div>
-    </div>
-
-    <footer id="pFoot"></footer>
   </section>
 </div>
 
@@ -615,7 +587,6 @@ function detectType(aoa){
   const has=s=>h.some(x=>x.includes(s));
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
-  if(has('salesvelocity')||has('estimatedsalesvelocity')) return 'planner';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
   return 'unknown';
 }
@@ -963,7 +934,7 @@ function mapColumns(aoa){
     asin:find([h=>h.includes('child')&&h.includes('asin'), h=>h.includes('asin'), h=>h==='sku', h=>h.includes('sku')]),
     units:find([h=>h.includes('unitsordered')&&notB2B(h), h=>h.includes('unitsordered')]),
     usp:find([h=>h.includes('unitsessionpercentage')&&notB2B(h), h=>h.includes('unitsession')&&notB2B(h), h=>h.includes('conversion')&&notB2B(h)]),
-    sales:find([h=>h.includes('orderedproductsales')&&notB2B(h), h=>h.includes('orderedproductsales'), h=>h.includes('productsales')&&notB2B(h), h=>h.includes('sales')&&notB2B(h)]),
+    sales:find([h=>h.includes('orderedproductsales')&&notB2B(h), h=>h.includes('orderedproductsales'), h=>h.includes('productsales')&&notB2B(h), h=>h.includes('sales')&&!h.includes('velocity')&&notB2B(h)]),
     orders:find([h=>h.includes('totalorderitems')&&notB2B(h), h=>h.includes('orderitems')&&notB2B(h), h=>h.includes('totalorders')]),
     sessions:find([h=>h.includes('sessions')&&h.includes('total')&&notB2B(h), h=>h==='sessions', h=>h.includes('sessions')&&notB2B(h)])
   };
@@ -1029,8 +1000,7 @@ function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentRetu
 
 const VIEWS={sales:{label:'Sales',list:()=>DB.periods,cur:'currentId'},
   returns:{label:'Returns',list:()=>DB.returns||[],cur:'currentReturnsId'},
-  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'},
-  planner:{label:'Shipment',list:()=>DB.planner||[],cur:'currentPlanId'}};
+  ads:{label:'Ads',list:()=>DB.ads||[],cur:'currentAdsId'}};
 function activeList(){return VIEWS[DB.view].list();}
 function activeCurId(){return DB[VIEWS[DB.view].cur];}
 function setActiveCur(id){DB[VIEWS[DB.view].cur]=id;}
@@ -1159,10 +1129,9 @@ function render(){
   $('#manageBtn').style.display='inline-flex';
   $('#exportWrap').style.display='block';
   refreshViewSwitch();
-  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#planDash').classList.remove('on');
+  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');
   if(DB.view==='returns'){$('#returnsDash').classList.add('on');renderReturns();}
   else if(DB.view==='ads'){$('#adsDash').classList.add('on');renderAds();}
-  else if(DB.view==='planner'){$('#planDash').classList.add('on');renderPlanner();}
   else{$('#dash').classList.add('on');renderSales();}
 }
 
@@ -1666,7 +1635,7 @@ function drawDaysSupply(I){
   });
 }
 
-function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#planDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
 
 /* ---------- shipment planner dashboard ---------- */
 let lastP=null;
@@ -1956,17 +1925,6 @@ function wire(){
   $('#filt').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
   $('#deltaSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;deltaMetric=b.dataset.dm;[...e.currentTarget.querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
 
-  // shipment planner: carton size inputs + target days
-  $('#pTbody').addEventListener('change',e=>{
-    const inp=e.target.closest('.carton-in');if(!inp)return;
-    const key=inp.dataset.key;const v=parseInt(inp.value);
-    DB.cartons=DB.cartons||{};
-    if(v>0)DB.cartons[key]=v; else delete DB.cartons[key];
-    dbSave(DB);renderPlanner();
-  });
-  $('#pDays').addEventListener('change',e=>{
-    let v=parseInt(e.target.value);if(!(v>0))v=70;DB.targetDays=v;dbSave(DB);renderPlanner();
-  });
 
   // export menu
   const em=$('#exportMenu');
