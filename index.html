@@ -33,6 +33,13 @@
   .countrysel{display:flex;align-items:center;gap:8px}
   .countrysel label,.periodsel label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
   .queue-note{margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;color:var(--ochre);text-transform:uppercase}
+  /* filter chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border:1px solid var(--vein);border-radius:999px;background:var(--surface);color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--onyx);color:var(--ink)}
+  .chip.on{background:var(--onyx-deep);border-color:var(--onyx-deep);color:#fff}
+  .chip-n{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(32,35,30,.08);color:inherit}
+  .chip.on .chip-n{background:rgba(255,255,255,.2)}
   .periodsel label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
   select.psel{appearance:none;background:var(--surface);border:1px solid var(--vein);border-radius:9px;padding:8px 30px 8px 12px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;
     background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235C6055' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
@@ -459,15 +466,22 @@
     <div class="glance-head"><span class="sec-num">Stock health</span><span class="glance-sub">What's low, what's stuck, and what's on the way.</span></div>
     <div class="insights" id="iInsights"></div>
 
+    <div class="sec">
+      <div class="sec-head"><span class="sec-num">01 — Where your units are</span><div class="t">Stock breakdown</div>
+        <div class="d">Total units by state: sellable on hand, on the way in, held in reserve, and unsellable (claimable).</div></div>
+      <div class="panel" style="padding:18px 16px 14px"><canvas id="stockCanvas" style="width:100%!important;height:280px!important"></canvas></div>
+    </div>
+
     <div class="sec" id="invChartSec">
-      <div class="sec-head"><span class="sec-num">01 — Running low</span><div class="t">Days of cover left</div>
+      <div class="sec-head"><span class="sec-num">02 — Running low</span><div class="t">Days of cover left</div>
         <div class="d">How long each seller lasts at current sales speed. Bars left of the dashed line have under a month of cover. Needs this country's Sales report.</div></div>
       <div class="panel" style="padding:16px 16px 14px"><canvas id="dosCanvas" style="width:100%!important;height:360px!important"></canvas></div>
     </div>
 
     <div class="sec">
-      <div class="sec-head"><span class="sec-num">02 — Full list</span><div class="t">Every product</div>
-        <div class="d">Sorted with out-of-stock and low-cover first. <b>On hand</b> is sellable FBA units; <b>Unsellable</b> units are usually claimable in Seller Central.</div></div>
+      <div class="sec-head"><span class="sec-num">03 — Full list</span><div class="t">Every product</div>
+        <div class="d">Tap a filter to see just those products. <b>On hand</b> is sellable FBA units; <b>Unsellable</b> units are usually claimable in Seller Central.</div></div>
+      <div class="chips" id="invFilters"></div>
       <table class="tbl"><thead><tr>
         <th style="text-align:left">Product</th><th>On hand</th><th>Inbound</th><th>Reserved</th><th>Sells/day</th><th>Days cover</th><th style="text-align:left">Status</th>
       </tr></thead><tbody id="iTbody"></tbody></table>
@@ -875,6 +889,7 @@ const INV_ST={
   out:{name:'Out of stock',color:'#A8593E',tag:'t-sink'},
   low:{name:'Low',color:'#B47A2E',tag:'t-win'},
   ok:{name:'In stock',color:'#4E6B4A',tag:'t-work'},
+  high:{name:'High stock',color:'#6E7468',tag:'t-quiet'},
   unsell:{name:'Unsellable',color:'#A8593E',tag:'t-sink'}
 };
 function parseInventory(aoa){
@@ -938,6 +953,7 @@ function computeInventory(rows,salesRows){
     let st;
     if(b.avail<=0)st='out';
     else if(dos!=null&&dos<30)st='low';
+    else if(dos!=null&&dos>90)st='high';
     else st='ok';
     return {...b,name,price,velocity,soldUnits,dos,st};
   });
@@ -950,7 +966,7 @@ function computeInventory(rows,salesRows){
   const cnt=st=>items.filter(i=>i.st===st).length;
   const outSelling=items.filter(i=>i.avail<=0&&i.velocity>0).length;
   return {items,hasSales,totUnits,value,unsellUnits,unsellValue,inboundUnits,reservedUnits,
-    out:cnt('out'),low:cnt('low'),unsellCount:items.filter(i=>i.unsell>0).length,outSelling};
+    out:cnt('out'),low:cnt('low'),high:cnt('high'),unsellCount:items.filter(i=>i.unsell>0).length,outSelling};
 }
 
 function mapColumns(aoa){
@@ -1573,6 +1589,20 @@ function drawAcos(A){
 
 /* ---------- inventory dashboard ---------- */
 let lastI=null;
+let invFilter='all';
+function invMatch(it,f,hasSales){
+  switch(f){
+    case 'all': return true;
+    case 'instock': return it.avail>0;
+    case 'out': return it.avail<=0;
+    case 'low': return hasSales ? (it.dos!=null&&it.dos<30) : (it.avail>0&&it.avail<=5);
+    case 'high': return hasSales ? (it.dos!=null&&it.dos>90) : (it.avail>=50);
+    case 'unsell': return it.unsell>0;
+    case 'inbound': return it.inbound>0;
+    case 'reserved': return it.reserved>0;
+  }
+  return true;
+}
 function renderInventory(){
   const ilist=orderedInv();
   const cur=ilist.find(p=>p.id===DB.currentInvId)||ilist[ilist.length-1];
@@ -1601,10 +1631,26 @@ function renderInventory(){
 
   buildInvInsights(I);
 
+  // stock breakdown chart (always shown)
+  drawStockBreakdown(I);
+
+  // days of cover chart (needs sales)
   if(I.hasSales){$('#invChartSec').style.display='';drawDaysSupply(I);}else{$('#invChartSec').style.display='none';killChart('dos');}
 
-  const order={out:0,low:1,ok:2};
-  const sorted=[...I.items].sort((a,b)=>(order[a.st]-order[b.st])||((a.dos??1e9)-(b.dos??1e9))||b.avail-a.avail);
+  // one-click filter chips with live counts
+  const chips=[
+    {k:'all',lab:'All'},{k:'instock',lab:'In stock'},{k:'low',lab:'Low stock'},{k:'high',lab:'High stock'},
+    {k:'out',lab:'Out of stock'},{k:'unsell',lab:'Unsellable'},{k:'inbound',lab:'Inbound'},{k:'reserved',lab:'Reserved'}
+  ];
+  if(invFilter!=='all'&&!I.items.some(it=>invMatch(it,invFilter,I.hasSales)))invFilter='all';
+  $('#invFilters').innerHTML=chips.map(c=>{
+    const n=I.items.filter(it=>invMatch(it,c.k,I.hasSales)).length;
+    return `<button class="chip${invFilter===c.k?' on':''}" data-f="${c.k}">${c.lab}<span class="chip-n">${num(n)}</span></button>`;
+  }).join('');
+
+  const order={out:0,low:1,ok:2,high:3};
+  const filtered=I.items.filter(it=>invMatch(it,invFilter,I.hasSales));
+  const sorted=filtered.sort((a,b)=>(order[a.st]-order[b.st])||((a.dos??1e9)-(b.dos??1e9))||b.avail-a.avail);
   $('#iTbody').innerHTML=sorted.map(it=>{
     const st=INV_ST[it.st];
     const dos=it.dos==null?'—':(Math.round(it.dos)+'d');
@@ -1614,7 +1660,10 @@ function renderInventory(){
       <td>${it.velocity>0?it.velocity.toFixed(2):'—'}</td><td>${dos}</td>
       <td><span class="tag ${st.tag}">${st.name}</span>${uns}</td></tr>`;
   }).join('');
-  $('#iCount').textContent=`${I.items.length} products · ${num(I.totUnits)} units on hand`;
+  const fUnits=filtered.reduce((a,i)=>a+i.avail,0);
+  $('#iCount').textContent=invFilter==='all'
+    ? `${I.items.length} products · ${num(I.totUnits)} units on hand`
+    : `${filtered.length} of ${I.items.length} products · ${num(fUnits)} units on hand`;
 
   $('#iFoot').innerHTML=`Source: ${cur.fileName||'inventory report'} · ${cur.rows.length} rows · added ${new Date(cur.added).toLocaleDateString()}.<br>`+
     `On hand = sellable FBA units (afn-fulfillable-quantity). `+(I.hasSales?`Days of cover = on hand ÷ (units sold ÷ ~${INV_DAYS} days); "Low" is under 30 days.`:`Load this country's Sales report to calculate days of cover.`);
@@ -1644,6 +1693,30 @@ function buildInvInsights(I){
     cards.push(insCard('#4E6B4A',ICO.bolt,'Healthy',`${num(I.totUnits)} units on hand`,`No out-of-stock or unsellable items in this report.`));
   }
   $('#iInsights').innerHTML=cards.slice(0,4).join('');
+}
+function drawStockBreakdown(I){
+  killChart('stock');
+  const cats=[
+    {lab:'On hand',val:I.totUnits,color:'#4E6B4A'},
+    {lab:'Inbound',val:I.inboundUnits,color:'#B47A2E'},
+    {lab:'Reserved',val:I.reservedUnits,color:'#6E7468'},
+    {lab:'Unsellable',val:I.unsellUnits,color:'#A8593E'}
+  ];
+  charts.stock=new Chart($('#stockCanvas'),{
+    type:'bar',
+    data:{labels:cats.map(c=>c.lab),datasets:[{label:'Units',data:cats.map(c=>c.val),backgroundColor:cats.map(c=>c.color+'dd'),borderColor:cats.map(c=>c.color),borderWidth:1,borderRadius:6,maxBarThickness:46}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        y:{grid:{color:'rgba(32,35,30,.05)'},ticks:{callback:v=>num(v),font:{size:10.5}},title:{display:true,text:'UNITS',font:{size:10},color:'#8B8E82'}},
+        x:{grid:{display:false},ticks:{font:{size:12,family:"'Inter'",weight:'600'},color:'#5C6055'}}
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#20231E',padding:10,cornerRadius:8,callbacks:{label:c=>num(c.raw)+' units'}}
+      }
+    }
+  });
 }
 function drawDaysSupply(I){
   killChart('dos');
@@ -1979,6 +2052,7 @@ function wire(){
     if(!presentViews().includes(DB.view))DB.view=presentViews()[0]||'sales';
     render();dbSave(DB);
   };
+  $('#invFilters').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;invFilter=b.dataset.f;renderInventory();};
   $('#barSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;barKey=b.dataset.k;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));if(lastM)drawBar(lastM);};
   $('#search').oninput=e=>{q=e.target.value.toLowerCase().trim();renderRows();};
   $('#filt').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
