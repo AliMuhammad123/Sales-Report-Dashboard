@@ -1106,6 +1106,7 @@ function orderedInv(){return (DB.inventory||[]).filter(sameC).sort((a,b)=>a.adde
 function orderedPlan(){return [...(DB.planner||[])].sort((a,b)=>a.added-b.added);}
 function countriesList(){const s=new Set();[...DB.periods,...(DB.returns||[]),...(DB.ads||[]),...(DB.inventory||[])].forEach(x=>s.add(x.country||''));return [...s].sort((a,b)=>(a||'\uffff').localeCompare(b||'\uffff'));}
 function countryLabel(c){return c||'No country';}
+function countryHasData(c){c=c||'';return DB.periods.some(x=>(x.country||'')===c)||(DB.returns||[]).some(x=>(x.country||'')===c)||(DB.ads||[]).some(x=>(x.country||'')===c)||(DB.inventory||[]).some(x=>(x.country||'')===c);}
 function curSalesRows(){const p=DB.periods.find(x=>x.id===DB.currentId);return p?p.rows:null;}
 function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentReturnsId);return p?p.rows:null;}
 
@@ -1234,7 +1235,7 @@ function refreshViewSwitch(){
 function render(){
   const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length;
   if(!anyData){showEmpty();return;}
-  if(!presentViews().length){const cs=countriesList();DB.activeCountry=cs.length?cs[0]:'';}
+  if(!countryHasData(DB.activeCountry)){const cs=countriesList();const withData=cs.find(countryHasData);DB.activeCountry=withData!=null?withData:(cs.length?cs[0]:'');}
   const present=presentViews();
   if(!present.length){showEmpty();return;}
   if(!present.includes(DB.view))DB.view=present[0];
@@ -2146,7 +2147,8 @@ async function processNextFile(){
 function commitPending(){
   if(!pending)return;
   const label=($('#mLabel').value||'').trim()||smartLabel(pending.fileName);
-  const country=($('#mCountry').value||'').trim();
+  let country=($('#mCountry').value||'').trim();
+  if(!country&&DB.activeCountry&&countryHasData(DB.activeCountry))country=DB.activeCountry;
   DB.lastCountry=country;DB.activeCountry=country;
   const id='p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const base={id,label,country,added:Date.now(),fileName:pending.fileName,rows:pending.rows};
@@ -2252,7 +2254,7 @@ function wire(){
       else if(DB.view==='inventory'){DB.inventory=(DB.inventory||[]).filter(p=>p.id!==id);if(DB.currentInvId===id){const o=orderedInv();DB.currentInvId=o.length?o[o.length-1].id:null;}}
       else{DB.periods=DB.periods.filter(p=>p.id!==id);if(DB.currentId===id){const o=ordered();DB.currentId=o.length?o[o.length-1].id:null;}}
       const stillHas=(DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length);
-      openManage();stillHas?render():showEmpty();   // update screen immediately
+      if(stillHas){render();openManage();}else{$('#mngScrim').classList.remove('on');showEmpty();}   // settle country, then refresh list
       dbSave(DB);                                    // persist in background
       return;}
     if(go){setActiveCur(go.dataset.go);$('#mngScrim').classList.remove('on');render();dbSave(DB);}
