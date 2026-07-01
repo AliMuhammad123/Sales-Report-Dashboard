@@ -332,7 +332,7 @@
 
     <div class="next-strip" id="nextStrip">
       <div class="ns-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
-      <div class="ns-tx"><b>Three tools in one:</b> Sales, Returns, and Ads. Drop any report in and use the switch at the top-left to move between dashboards.</div>
+      <div class="ns-tx"><b>Four tools in one:</b> Sales, Returns, Ads, and Inventory. Drop any report in and use the switch at the top-left to move between dashboards — each country stays separate.</div>
     </div>
 
     <div class="sec" id="compareSec" style="display:none">
@@ -445,6 +445,36 @@
     </div>
 
     <footer id="aFoot"></footer>
+  </section>
+
+  <!-- inventory dashboard -->
+  <section class="dash" id="invDash">
+    <div class="period-head">
+      <div><span class="pl" style="color:var(--onyx-deep)">Inventory report</span><h2 id="iTitle">—</h2><div class="pmeta" id="iMeta"></div></div>
+      <div class="cmp-flag" id="iFlag"></div>
+    </div>
+
+    <div class="kpis" id="iKpis"></div>
+
+    <div class="glance-head"><span class="sec-num">Stock health</span><span class="glance-sub">What's low, what's stuck, and what's on the way.</span></div>
+    <div class="insights" id="iInsights"></div>
+
+    <div class="sec" id="invChartSec">
+      <div class="sec-head"><span class="sec-num">01 — Running low</span><div class="t">Days of cover left</div>
+        <div class="d">How long each seller lasts at current sales speed. Bars left of the dashed line have under a month of cover. Needs this country's Sales report.</div></div>
+      <div class="panel" style="padding:16px 16px 14px"><canvas id="dosCanvas" style="width:100%!important;height:360px!important"></canvas></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="sec-num">02 — Full list</span><div class="t">Every product</div>
+        <div class="d">Sorted with out-of-stock and low-cover first. <b>On hand</b> is sellable FBA units; <b>Unsellable</b> units are usually claimable in Seller Central.</div></div>
+      <table class="tbl"><thead><tr>
+        <th style="text-align:left">Product</th><th>On hand</th><th>Inbound</th><th>Reserved</th><th>Sells/day</th><th>Days cover</th><th style="text-align:left">Status</th>
+      </tr></thead><tbody id="iTbody"></tbody></table>
+      <div class="tcount" id="iCount"></div>
+    </div>
+
+    <footer id="iFoot"></footer>
   </section>
 </div>
 
@@ -604,6 +634,7 @@ function detectType(aoa){
   const has=s=>h.some(x=>x.includes(s));
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
+  if(has('afnfulfillablequantity')||has('afntotalquantity')) return 'inventory';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
   return 'unknown';
 }
@@ -838,18 +869,13 @@ function computePlanner(rows,cartons,days){
   return {items,days,productsToShip,totalCartons,totalUnits,needCarton,outStock,needAtt};
 }
 
-/* ---------- INVENTORY (legacy, unused) ---------- */
-const INV_DAYS=30;   // sales report assumed to cover ~30 days
-const INV_LEAD=30;   // days it takes to restock
-const INV_COVER=60;  // target days of stock to hold
+/* ---------- INVENTORY (FBA stock report) ---------- */
+const INV_DAYS=30;   // sales report is assumed to cover ~30 days (for days-of-cover only)
 const INV_ST={
-  out:{name:'Out of stock',color:'#A8593E',tag:'t-sink',desc:'Selling, but zero on hand — losing sales right now.'},
-  urgent:{name:'Restock now',color:'#A8593E',tag:'t-sink',desc:'Will run out before a new shipment can arrive.'},
-  soon:{name:'Restock soon',color:'#B47A2E',tag:'t-win',desc:'Getting low — plan the next order.'},
-  ok:{name:'Healthy',color:'#4E6B4A',tag:'t-work',desc:'Comfortable cover for current sales.'},
-  over:{name:'Overstocked',color:'#9AA08F',tag:'t-quiet',desc:'Far more than you\u2019ll sell soon — cash tied up.'},
-  dead:{name:'Not selling',color:'#9AA08F',tag:'t-quiet',desc:'Has stock but no recent sales.'},
-  unknown:{name:'No stock data',color:'#9AA08F',tag:'t-quiet',desc:'Stock level missing from this file.'}
+  out:{name:'Out of stock',color:'#A8593E',tag:'t-sink'},
+  low:{name:'Low',color:'#B47A2E',tag:'t-win'},
+  ok:{name:'In stock',color:'#4E6B4A',tag:'t-work'},
+  unsell:{name:'Unsellable',color:'#A8593E',tag:'t-sink'}
 };
 function parseInventory(aoa){
   const hi=headerRow(aoa);
@@ -859,83 +885,72 @@ function parseInventory(aoa){
   const col={
     asin:find([h=>h==='asin',h=>h.includes('asin')]),
     sku:find([h=>h==='sku',h=>h.includes('sellersku'),h=>h.includes('sku')]),
+    fnsku:find([h=>h.includes('fnsku')]),
     name:find([h=>h.includes('productname'),h=>h.includes('itemname'),h=>h.includes('title')]),
-    price:find([h=>h==='price',h=>h.includes('yourprice'),h=>h.includes('price')]),
-    avail:find([h=>h.includes('afnfulfillablequantity'),h=>h.includes('availablequantity'),h=>h==='available',h=>h.includes('available'),h=>h.includes('quantityavailable'),h=>h==='quantity']),
-    dos:find([h=>h.includes('daysofsupply')]),
-    rec:find([h=>h.includes('recommendedreplenishment'),h=>h.includes('recommendedquantity'),h=>h.includes('recommended')])
+    price:find([h=>h.includes('yourprice'),h=>h==='price',h=>h.includes('price')]),
+    avail:find([h=>h.includes('afnfulfillablequantity')&&!h.includes('local')&&!h.includes('remote'),h=>h.includes('afnfulfillablequantity'),h=>h.includes('availablequantity'),h=>h==='available']),
+    unsell:find([h=>h.includes('afnunsellablequantity'),h=>h.includes('unsellable')]),
+    reserved:find([h=>h.includes('afnreservedquantity'),h=>h.includes('reservedquantity')]),
+    total:find([h=>h.includes('afntotalquantity'),h=>h.includes('totalquantity')])
   };
   const inboundCols=findAll(h=>h.includes('inbound')&&h.includes('quantity'));
-  if(col.asin<0&&col.sku<0) throw new Error("This doesn't look like an Inventory report. It should list SKU/ASIN and a stock quantity.");
-  const rows=[];let anyStock=false;
+  if(col.avail<0) throw new Error("This needs an FBA inventory report with an 'afn-fulfillable-quantity' column.");
+  const rows=[];
   for(let i=hi+1;i<aoa.length;i++){
     const r=aoa[i];if(!r||!r.length)continue;
     const asin=col.asin>=0?String(r[col.asin]||'').trim():'';
     const sku=col.sku>=0?String(r[col.sku]||'').trim():'';
     if(!asin&&!sku)continue;
-    const availRaw=col.avail>=0?String(r[col.avail]||'').trim():'';
-    const avail=availRaw===''?null:toInt(availRaw);
-    if(avail!=null)anyStock=true;
     let inbound=0;inboundCols.forEach(c=>inbound+=toInt(r[c]));
     rows.push({
-      asin,sku,name:col.name>=0?String(r[col.name]||'').trim():'',
+      asin,sku,fnsku:col.fnsku>=0?String(r[col.fnsku]||'').trim():'',
+      name:col.name>=0?String(r[col.name]||'').trim():'',
       price:col.price>=0?toMoney(r[col.price]):0,
-      avail,inbound,
-      dos:col.dos>=0?toMoney(r[col.dos]):null,
-      rec:col.rec>=0?toInt(r[col.rec]):null
+      avail:col.avail>=0?toInt(r[col.avail]):0,
+      unsell:col.unsell>=0?toInt(r[col.unsell]):0,
+      reserved:col.reserved>=0?toInt(r[col.reserved]):0,
+      total:col.total>=0?toInt(r[col.total]):0,
+      inbound
     });
   }
   if(!rows.length) throw new Error("No inventory rows found below the header.");
-  return {rows,hasStock:anyStock};
+  return {rows};
 }
-function computeInventory(rows,salesRows,returnsRows,hasStock){
+function computeInventory(rows,salesRows){
   const sMap={};if(salesRows)salesRows.forEach(s=>{if(s.asin)sMap[s.asin]=s;});
-  // returns qty + rate per asin
-  const rMap={};
-  if(returnsRows){returnsRows.forEach(r=>{if(!r.asin)return;rMap[r.asin]=(rMap[r.asin]||0)+ (r.qty||1);});}
-  // collapse by asin (a product can have multiple SKUs)
+  // collapse by asin (a product may have several SKUs)
   const byAsin={};
   rows.forEach(r=>{
     const k=r.asin||r.sku;
-    if(!byAsin[k])byAsin[k]={asin:r.asin,sku:r.sku,name:r.name,price:r.price,avail:null,inbound:0,dos:r.dos,rec:r.rec};
+    if(!byAsin[k])byAsin[k]={asin:r.asin,sku:r.sku,fnsku:r.fnsku,name:r.name,price:r.price,avail:0,unsell:0,reserved:0,total:0,inbound:0};
     const b=byAsin[k];
-    if(r.avail!=null)b.avail=(b.avail||0)+r.avail;
-    b.inbound+=r.inbound||0;
+    b.avail+=r.avail;b.unsell+=r.unsell;b.reserved+=r.reserved;b.total+=r.total;b.inbound+=r.inbound;
     if(!b.price&&r.price)b.price=r.price;
-    if(r.dos!=null)b.dos=r.dos;
-    if(r.rec!=null)b.rec=r.rec;
   });
+  const hasSales=!!salesRows;
   const items=Object.values(byAsin).map(b=>{
     const s=sMap[b.asin];
     const soldUnits=s?s.units:0;
-    const velocity=soldUnits/INV_DAYS; // units/day
+    const velocity=soldUnits/INV_DAYS; // units/day (only meaningful if sales present)
     const name=b.name||(s?s.title:'')||b.asin||b.sku;
     const price=b.price||(s&&s.units?s.sales/s.units:0);
-    const avail=b.avail;
-    let dos=b.dos;
-    if(dos==null) dos = (avail!=null&&velocity>0)?avail/velocity:(avail!=null&&avail>0?Infinity:(velocity>0?0:null));
-    let reorder=0;
-    if(hasStock&&velocity>0){reorder=Math.max(0,Math.ceil(INV_COVER*velocity)-(avail||0)-(b.inbound||0));}
-    if(b.rec!=null)reorder=b.rec;
-    const retQty=rMap[b.asin]||0;
-    const retRate=(soldUnits>0&&retQty>0)?retQty/soldUnits*100:null;
+    const dos=velocity>0?b.avail/velocity:null; // days of cover
     let st;
-    if(!hasStock||avail==null)st='unknown';
-    else if(velocity>0&&avail<=0)st='out';
-    else if(velocity>0&&dos<INV_LEAD)st='urgent';
-    else if(velocity>0&&dos<INV_COVER)st='soon';
-    else if(velocity<=0&&avail>0)st='dead';
-    else if(velocity>0&&dos>180)st='over';
+    if(b.avail<=0)st='out';
+    else if(dos!=null&&dos<30)st='low';
     else st='ok';
-    return {...b,name,price,avail,velocity,soldUnits,dos,reorder,st,retQty,retRate};
+    return {...b,name,price,velocity,soldUnits,dos,st};
   });
-  const totUnits=items.reduce((a,i)=>a+(i.avail||0),0);
-  const value=items.reduce((a,i)=>a+((i.avail||0)*(i.price||0)),0);
+  const totUnits=items.reduce((a,i)=>a+i.avail,0);
+  const value=items.reduce((a,i)=>a+i.avail*(i.price||0),0);
+  const unsellUnits=items.reduce((a,i)=>a+i.unsell,0);
+  const unsellValue=items.reduce((a,i)=>a+i.unsell*(i.price||0),0);
+  const inboundUnits=items.reduce((a,i)=>a+i.inbound,0);
+  const reservedUnits=items.reduce((a,i)=>a+i.reserved,0);
   const cnt=st=>items.filter(i=>i.st===st).length;
-  const restockUnits=items.reduce((a,i)=>a+(i.reorder||0),0);
-  const overValue=items.filter(i=>i.st==='over'||i.st==='dead').reduce((a,i)=>a+((i.avail||0)*(i.price||0)),0);
-  return {items,hasStock,totUnits,value,restockUnits,overValue,hasSales:!!salesRows,hasReturns:!!returnsRows,
-    out:cnt('out'),urgent:cnt('urgent'),soon:cnt('soon'),over:cnt('over'),dead:cnt('dead')};
+  const outSelling=items.filter(i=>i.avail<=0&&i.velocity>0).length;
+  return {items,hasSales,totUnits,value,unsellUnits,unsellValue,inboundUnits,reservedUnits,
+    out:cnt('out'),low:cnt('low'),unsellCount:items.filter(i=>i.unsell>0).length,outSelling};
 }
 
 function mapColumns(aoa){
@@ -1015,7 +1030,7 @@ function ordered(){return DB.periods.filter(sameC).sort((a,b)=>a.added-b.added);
 function prevOf(id){const o=ordered();const i=o.findIndex(p=>p.id===id);return i>0?o[i-1]:null;}
 function orderedReturns(){return (DB.returns||[]).filter(sameC).sort((a,b)=>a.added-b.added);}
 function orderedAds(){return (DB.ads||[]).filter(sameC).sort((a,b)=>a.added-b.added);}
-function orderedInv(){return [...(DB.inventory||[])].sort((a,b)=>a.added-b.added);}
+function orderedInv(){return (DB.inventory||[]).filter(sameC).sort((a,b)=>a.added-b.added);}
 function orderedPlan(){return [...(DB.planner||[])].sort((a,b)=>a.added-b.added);}
 function countriesList(){const s=new Set();[...DB.periods,...(DB.returns||[]),...(DB.ads||[])].forEach(x=>s.add(x.country||''));return [...s].sort((a,b)=>(a||'\uffff').localeCompare(b||'\uffff'));}
 function countryLabel(c){return c||'No country';}
@@ -1024,7 +1039,8 @@ function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentRetu
 
 const VIEWS={sales:{label:'Sales',list:()=>DB.periods.filter(sameC),cur:'currentId'},
   returns:{label:'Returns',list:()=>(DB.returns||[]).filter(sameC),cur:'currentReturnsId'},
-  ads:{label:'Ads',list:()=>(DB.ads||[]).filter(sameC),cur:'currentAdsId'}};
+  ads:{label:'Ads',list:()=>(DB.ads||[]).filter(sameC),cur:'currentAdsId'},
+  inventory:{label:'Inventory',list:()=>(DB.inventory||[]).filter(sameC),cur:'currentInvId'}};
 function activeList(){return VIEWS[DB.view].list();}
 function activeCurId(){return DB[VIEWS[DB.view].cur];}
 function setActiveCur(id){DB[VIEWS[DB.view].cur]=id;}
@@ -1140,7 +1156,7 @@ function refreshViewSwitch(){
 }
 
 function render(){
-  const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length;
+  const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length;
   if(!anyData){showEmpty();return;}
   if(!presentViews().length){const cs=countriesList();DB.activeCountry=cs.length?cs[0]:'';}
   const present=presentViews();
@@ -1152,9 +1168,10 @@ function render(){
   $('#exportWrap').style.display='block';
   refreshCountrySwitch();
   refreshViewSwitch();
-  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');
+  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');
   if(DB.view==='returns'){$('#returnsDash').classList.add('on');renderReturns();}
   else if(DB.view==='ads'){$('#adsDash').classList.add('on');renderAds();}
+  else if(DB.view==='inventory'){$('#invDash').classList.add('on');renderInventory();}
   else{$('#dash').classList.add('on');renderSales();}
 }
 function refreshCountrySwitch(){
@@ -1557,121 +1574,96 @@ function drawAcos(A){
 /* ---------- inventory dashboard ---------- */
 let lastI=null;
 function renderInventory(){
-  const cur=(DB.inventory||[]).find(p=>p.id===DB.currentInvId)||orderedInv()[orderedInv().length-1];
+  const ilist=orderedInv();
+  const cur=ilist.find(p=>p.id===DB.currentInvId)||ilist[ilist.length-1];
   if(!cur){DB.view='sales';return render();}
   DB.currentInvId=cur.id;
-  const I=computeInventory(cur.rows,curSalesRows(),curReturnsRows(),cur.hasStock);
+  const I=computeInventory(cur.rows,curSalesRows());
   lastI=I;
   const salesP=DB.periods.find(p=>p.id===DB.currentId);
 
-  $('#periodSel').innerHTML=orderedInv().map(p=>`<option value="${p.id}"${p.id===cur.id?' selected':''}>${p.label}</option>`).join('');
+  $('#periodSel').innerHTML=ilist.map(p=>`<option value="${p.id}"${p.id===cur.id?' selected':''}>${p.label}</option>`).join('');
 
   $('#iTitle').textContent=cur.label;
   $('#iMeta').textContent=`${I.items.length} products · ${cur.fileName||'report'}`;
-  $('#iFlag').innerHTML = !I.hasStock
-    ? `<b style="color:var(--clay)">No stock levels in this file.</b><br>Upload the FBA inventory report for restock numbers.`
-    : (I.hasSales?`Restock based on sales speed from <b>${salesP?salesP.label:'—'}</b>.`:`Add a Sales period to calculate restock.`);
+  $('#iFlag').innerHTML = I.hasSales
+    ? `Days of cover use sales from <b>${salesP?salesP.label:'—'}</b>.`
+    : `Add a Sales report for this country to see days of cover.`;
 
-  const kp = !I.hasStock ? [
-    {lab:'Products',val:num(I.items.length),accent:true,sub:'in this file'},
-    {lab:'On Hand',val:'—',sub:'not in this file'},
-    {lab:'Restock Now',val:'—',sub:'needs stock data'},
-    {lab:'Overstocked',val:'—',sub:'needs stock data'},
-    {lab:'Stock Value',val:'—',sub:'needs stock data'}
-  ] : [
-    {lab:'Units On Hand',val:num(I.totUnits),accent:true,sub:fUSD(I.value)+' value'},
-    {lab:'Restock Now',val:num(I.out+I.urgent),accent:true,sub:I.out?I.out+' out of stock':'running low'},
-    {lab:'To Reorder',val:num(I.restockUnits),sub:'units suggested'},
-    {lab:'Overstocked',val:num(I.over+I.dead),sub:fUSD(I.overValue)+' tied up'},
-    {lab:'Running Soon',val:num(I.soon),sub:'plan ahead'}
+  const kp=[
+    {lab:'Units On Hand',val:num(I.totUnits),accent:true,sub:fUSD(I.value)+' at list price'},
+    {lab:'Out Of Stock',val:num(I.out),accent:true,sub:I.hasSales&&I.outSelling?I.outSelling+' still selling':'zero sellable'},
+    {lab:'Unsellable',val:num(I.unsellUnits),sub:I.unsellUnits?'~'+fUSD(I.unsellValue)+' · claimable':'none'},
+    {lab:'Inbound',val:num(I.inboundUnits),sub:'on the way in'},
+    {lab:I.hasSales?'Low Stock':'Reserved',val:num(I.hasSales?I.low:I.reservedUnits),sub:I.hasSales?'under 30 days':'held by Amazon'}
   ];
   $('#iKpis').innerHTML=kp.map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
 
   buildInvInsights(I);
 
-  // chart: days of supply for selling products (only if stock)
-  if(I.hasStock){$('#invChartSec').style.display='';drawDaysSupply(I);}else{$('#invChartSec').style.display='none';killChart('dos');}
+  if(I.hasSales){$('#invChartSec').style.display='';drawDaysSupply(I);}else{$('#invChartSec').style.display='none';killChart('dos');}
 
-  // table
-  const order={out:0,urgent:1,soon:2,ok:3,over:4,dead:5,unknown:6};
-  const sorted=[...I.items].sort((a,b)=>(order[a.st]-order[b.st])||((a.dos??1e9)-(b.dos??1e9))||b.velocity-a.velocity);
+  const order={out:0,low:1,ok:2};
+  const sorted=[...I.items].sort((a,b)=>(order[a.st]-order[b.st])||((a.dos??1e9)-(b.dos??1e9))||b.avail-a.avail);
   $('#iTbody').innerHTML=sorted.map(it=>{
     const st=INV_ST[it.st];
-    const dos=it.dos==null?'—':(it.dos===Infinity?'∞':Math.round(it.dos)+'d');
-    const ret=it.retRate!=null&&it.retRate>=15?' <span class="tag t-sink" title="High return rate">↩ '+it.retRate.toFixed(0)+'%</span>':'';
-    return `<tr><td><div class="pname">${short(it.name,60)}</div><div class="pasin">${it.asin||it.sku}</div></td>
-      <td>${it.avail==null?'—':num(it.avail)}</td><td>${it.inbound?num(it.inbound):'—'}</td>
+    const dos=it.dos==null?'—':(Math.round(it.dos)+'d');
+    const uns=it.unsell>0?` <span class="tag t-sink" title="Unsellable — claim or remove">${it.unsell} unsellable</span>`:'';
+    return `<tr><td><div class="pname">${short(it.name,58)}</div><div class="pasin">${it.asin||it.sku}</div></td>
+      <td>${num(it.avail)}</td><td>${it.inbound?num(it.inbound):'—'}</td><td>${it.reserved?num(it.reserved):'—'}</td>
       <td>${it.velocity>0?it.velocity.toFixed(2):'—'}</td><td>${dos}</td>
-      <td>${it.reorder>0?'<b>'+num(it.reorder)+'</b>':'—'}</td>
-      <td><span class="tag ${st.tag}">${st.name}</span>${ret}</td></tr>`;
+      <td><span class="tag ${st.tag}">${st.name}</span>${uns}</td></tr>`;
   }).join('');
-  $('#iCount').textContent=`${I.items.length} products`;
+  $('#iCount').textContent=`${I.items.length} products · ${num(I.totUnits)} units on hand`;
 
   $('#iFoot').innerHTML=`Source: ${cur.fileName||'inventory report'} · ${cur.rows.length} rows · added ${new Date(cur.added).toLocaleDateString()}.<br>`+
-    `Restock assumes sales cover ~${INV_DAYS} days, ${INV_LEAD}-day restock time, and a ${INV_COVER}-day stock target.`+
-    (I.hasReturns?' Products with high return rates are flagged ↩ — verify quality before reordering.':'');
+    `On hand = sellable FBA units (afn-fulfillable-quantity). `+(I.hasSales?`Days of cover = on hand ÷ (units sold ÷ ~${INV_DAYS} days); "Low" is under 30 days.`:`Load this country's Sales report to calculate days of cover.`);
 }
 function buildInvInsights(I){
   const cards=[];
-  if(!I.hasStock){
-    cards.push(insCard('#A8593E',ICO.leak,'Missing stock levels','This is the listings file',
-      `It lists your SKUs and prices but not how many units you hold (normal for FBA). For restock advice, upload the <b>FBA Inventory</b> report (it has "afn-fulfillable-quantity") or the <b>Restock Inventory</b> report.`));
-    // velocity-based: fastest sellers to keep stocked
-    const fast=[...I.items].filter(i=>i.velocity>0).sort((a,b)=>b.velocity-a.velocity)[0];
-    if(fast)cards.push(insCard('#4E6B4A',ICO.bolt,'Keep stocked',short(fast.name,38),
-      `Your fastest seller at <b>${(fast.velocity*7).toFixed(1)}</b> units/week. Make sure this one never runs dry.`));
-    cards.push(insCard('#8B8E82',ICO.star,'What you\u2019ll get','Restock recommendations',
-      `With stock levels loaded, this view shows days of cover, what to reorder and how much, and what\u2019s overstocked.`));
-    $('#iInsights').innerHTML=cards.slice(0,3).join('');
-    return;
-  }
-  // out of stock
   if(I.out){
     const o=[...I.items].filter(i=>i.st==='out').sort((a,b)=>b.velocity-a.velocity)[0];
-    cards.push(insCard('#A8593E',ICO.leak,'Out of stock',`${I.out} selling product${I.out>1?'s':''} at zero`,
-      `Losing sales now. Worst: <b>${short(o.name,34)}</b> — was selling ${(o.velocity*7).toFixed(1)}/week with none on hand.`));
+    const sub=I.hasSales&&I.outSelling?`${I.outSelling} of them still selling`:`${I.out} products at zero`;
+    cards.push(insCard('#A8593E',ICO.leak,'Out of stock',sub,
+      (I.hasSales&&o&&o.velocity>0)?`Losing sales now. Worst: <b>${short(o.name,34)}</b> — was selling ${(o.velocity*7).toFixed(1)}/week with none on hand.`:`${I.out} products have no sellable units in Amazon\u2019s warehouse.`));
   }
-  // restock now (urgent)
-  const urg=[...I.items].filter(i=>i.st==='urgent').sort((a,b)=>a.dos-b.dos)[0];
-  if(urg){
-    cards.push(insCard('#B47A2E',ICO.star,'Restock now',short(urg.name,38),
-      `About <b>${Math.round(urg.dos)} days</b> of stock left at current pace. Suggested reorder: <b>${num(urg.reorder)}</b> units.`));
+  if(I.unsellUnits){
+    cards.push(insCard('#A8593E',ICO.trend,'Unsellable',`${I.unsellUnits} units · ~${fUSD(I.unsellValue)}`,
+      `Amazon is holding these as damaged/defective. You can usually file a <b>removal or reimbursement</b> in Seller Central.`));
   }
-  // returns caution among restock list
-  const caution=[...I.items].filter(i=>(i.st==='urgent'||i.st==='out'||i.st==='soon')&&i.retRate!=null&&i.retRate>=15).sort((a,b)=>b.retRate-a.retRate)[0];
-  if(caution){
-    cards.push(insCard('#A8593E',ICO.leak,'Check before reordering',short(caution.name,36),
-      `It needs restocking but <b>${caution.retRate.toFixed(0)}%</b> of units came back. Fix the cause before buying more.`));
+  if(I.hasSales&&I.low){
+    const lw=[...I.items].filter(i=>i.st==='low').sort((a,b)=>a.dos-b.dos)[0];
+    cards.push(insCard('#B47A2E',ICO.star,'Running low',`${I.low} under 30 days`,
+      lw?`Soonest: <b>${short(lw.name,34)}</b> — about <b>${Math.round(lw.dos)} days</b> of cover left at current sales.`:`${I.low} products have under a month of cover.`));
   }
-  // overstock
-  if(I.over+I.dead){
-    cards.push(insCard('#9AA08F',ICO.trend,'Overstocked',`${I.over+I.dead} products · ${fUSD(I.overValue)} tied up`,
-      `Far more stock than current sales need. Hold off reordering and consider a promotion to free up cash.`));
-  }else if(cards.length<3){
-    cards.push(insCard('#4E6B4A',ICO.bolt,'Healthy',`${num(I.totUnits)} units on hand`,
-      `Most products have comfortable cover for current sales.`));
+  if(I.inboundUnits){
+    cards.push(insCard('#4E6B4A',ICO.bolt,'On the way',`${num(I.inboundUnits)} units inbound`,
+      `Already heading into Amazon — factor these in before sending more.`));
+  }
+  if(!cards.length){
+    cards.push(insCard('#4E6B4A',ICO.bolt,'Healthy',`${num(I.totUnits)} units on hand`,`No out-of-stock or unsellable items in this report.`));
   }
   $('#iInsights').innerHTML=cards.slice(0,4).join('');
 }
 function drawDaysSupply(I){
   killChart('dos');
-  const sel=I.items.filter(i=>i.velocity>0&&i.avail!=null&&i.avail>0&&i.dos>0&&i.dos!==Infinity).sort((a,b)=>a.dos-b.dos).slice(0,12);
+  const sel=I.items.filter(i=>i.velocity>0&&i.avail>0&&i.dos!=null).sort((a,b)=>a.dos-b.dos).slice(0,12);
   const colorFor=st=>INV_ST[st].color;
   charts.dos=new Chart($('#dosCanvas'),{
     type:'bar',
-    data:{labels:sel.map(i=>short(i.name,24)),datasets:[{label:'Days left',data:sel.map(i=>Math.round(i.dos)),backgroundColor:sel.map(i=>colorFor(i.st)+'dd'),borderColor:sel.map(i=>colorFor(i.st)),borderWidth:1,borderRadius:5,maxBarThickness:18}]},
+    data:{labels:sel.map(i=>short(i.name,24)),datasets:[{label:'Days of cover',data:sel.map(i=>Math.round(i.dos)),backgroundColor:sel.map(i=>colorFor(i.st)+'dd'),borderColor:sel.map(i=>colorFor(i.st)),borderWidth:1,borderRadius:5,maxBarThickness:18}]},
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       scales:{
-        x:{grid:{color:'rgba(32,35,30,.05)'},title:{display:true,text:'DAYS OF STOCK LEFT',font:{size:10},color:'#8B8E82'},ticks:{callback:v=>v+'d'}},
+        x:{grid:{color:'rgba(32,35,30,.05)'},title:{display:true,text:'DAYS OF COVER LEFT',font:{size:10},color:'#8B8E82'},ticks:{callback:v=>v+'d'}},
         y:{grid:{display:false},ticks:{font:{size:10.5,family:"'Inter'"},color:'#5C6055'}}
       },
       plugins:{
         legend:{display:false},
-        tooltip:{backgroundColor:'#20231E',padding:10,cornerRadius:8,callbacks:{title:c=>short(sel[c[0].dataIndex].name,40),label:c=>{const i=sel[c.dataIndex];return [Math.round(i.dos)+' days left',i.avail+' on hand · '+(i.velocity*7).toFixed(1)+'/wk',i.reorder>0?'Reorder '+i.reorder:'OK'];}}}
+        tooltip:{backgroundColor:'#20231E',padding:10,cornerRadius:8,callbacks:{title:c=>short(sel[c[0].dataIndex].name,40),label:c=>{const i=sel[c.dataIndex];return [Math.round(i.dos)+' days of cover',i.avail+' on hand · '+(i.velocity*7).toFixed(1)+'/wk'];}}}
       }
     },
-    plugins:[{id:'leadline',afterDraw(c){const x=c.scales.x.getPixelForValue(INV_LEAD);const{ctx,chartArea:a}=c;ctx.save();ctx.strokeStyle='rgba(168,89,62,.5)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(168,89,62,.8)';ctx.font="10px 'JetBrains Mono'";ctx.fillText(INV_LEAD+'d restock',x+4,a.top+10);ctx.restore();}}]
+    plugins:[{id:'lowline',afterDraw(c){const x=c.scales.x.getPixelForValue(30);const{ctx,chartArea:a}=c;ctx.save();ctx.strokeStyle='rgba(180,122,46,.6)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(180,122,46,.85)';ctx.font="10px 'JetBrains Mono'";ctx.fillText('30d',x+4,a.top+10);ctx.restore();}}]
   });
 }
 
@@ -1784,6 +1776,17 @@ function exportCSV(){
     downloadBlob((cur.label||'shipment').replace(/[^\w\-]+/g,'_')+'_plan.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
     return;
   }
+  if(DB.view==='inventory'){
+    const cur=(DB.inventory||[]).find(p=>p.id===DB.currentInvId);if(!cur)return;
+    const I=computeInventory(cur.rows,curSalesRows());
+    const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    const head=['ASIN','SKU','Product','On Hand','Inbound','Reserved','Unsellable','Units/Day','Days Cover','Status'];
+    const lines=[head.map(esc).join(',')];
+    const order={out:0,low:1,ok:2};
+    [...I.items].sort((a,b)=>(order[a.st]-order[b.st])||b.avail-a.avail).forEach(it=>lines.push([it.asin,it.sku,it.name,it.avail,it.inbound,it.reserved,it.unsell,it.velocity>0?it.velocity.toFixed(2):'',it.dos==null?'':Math.round(it.dos),INV_ST[it.st].name].map(esc).join(',')));
+    downloadBlob((cur.label||'inventory').replace(/[^\w\-]+/g,'_')+'_inventory.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+    return;
+  }
   const cur=DB.periods.find(p=>p.id===DB.currentId);if(!cur)return;
   const M=compute(cur.rows);
   const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
@@ -1793,27 +1796,25 @@ function exportCSV(){
   downloadBlob((cur.label||'period').replace(/[^\w\-]+/g,'_')+'_products.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
 }
 function backupAll(){
-  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.planner||[]).length)return;
+  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.inventory||[]).length)return;
   downloadBlob('sales-studio-backup-'+new Date().toISOString().slice(0,10)+'.json','application/json',JSON.stringify(DB));
 }
 async function restoreFrom(file){
   try{
     const obj=JSON.parse(await file.text());
-    if(!obj||(!Array.isArray(obj.periods)&&!Array.isArray(obj.returns)&&!Array.isArray(obj.ads)&&!Array.isArray(obj.planner)))throw 0;
+    if(!obj||(!Array.isArray(obj.periods)&&!Array.isArray(obj.returns)&&!Array.isArray(obj.ads)&&!Array.isArray(obj.inventory)))throw 0;
     const sIds=new Set(DB.periods.map(p=>p.id));
     (obj.periods||[]).forEach(p=>{if(!sIds.has(p.id))DB.periods.push(p);});
     DB.returns=DB.returns||[];const rIds=new Set(DB.returns.map(p=>p.id));
     (obj.returns||[]).forEach(p=>{if(!rIds.has(p.id))DB.returns.push(p);});
     DB.ads=DB.ads||[];const aIds=new Set(DB.ads.map(p=>p.id));
     (obj.ads||[]).forEach(p=>{if(!aIds.has(p.id))DB.ads.push(p);});
-    DB.planner=DB.planner||[];const pIds=new Set(DB.planner.map(p=>p.id));
-    (obj.planner||[]).forEach(p=>{if(!pIds.has(p.id))DB.planner.push(p);});
-    if(obj.cartons)DB.cartons=Object.assign({},obj.cartons,DB.cartons);
-    if(obj.targetDays&&!DB.targetDays)DB.targetDays=obj.targetDays;
+    DB.inventory=DB.inventory||[];const iIds=new Set(DB.inventory.map(p=>p.id));
+    (obj.inventory||[]).forEach(p=>{if(!iIds.has(p.id))DB.inventory.push(p);});
     if(!DB.currentId&&DB.periods.length)DB.currentId=ordered()[ordered().length-1].id;
     if(!DB.currentReturnsId&&DB.returns.length)DB.currentReturnsId=orderedReturns()[orderedReturns().length-1].id;
     if(!DB.currentAdsId&&DB.ads.length)DB.currentAdsId=orderedAds()[orderedAds().length-1].id;
-    if(!DB.currentPlanId&&DB.planner.length)DB.currentPlanId=orderedPlan()[orderedPlan().length-1].id;
+    if(!DB.currentInvId&&DB.inventory.length)DB.currentInvId=orderedInv()[orderedInv().length-1].id;
     await dbSave(DB);$('#mngScrim').classList.remove('on');render();
   }catch(e){alert('That file isn\u2019t a valid backup.');}
 }
@@ -1845,11 +1846,11 @@ function openAddModal(type,rows,fileName,extra){
     $('#mTitle').textContent='Name this Ads report';
     $('#mDesc').textContent='A label you\u2019ll recognise — the period it covers works well.';
     $('#mInfo').innerHTML=`Found <b>${A.groups.length}</b> ad groups · <b>${fUSD(A.totSpend)}</b> spend → <b>${fUSD(A.totSales)}</b> sales at <b>${A.acos.toFixed(1)}%</b> ACOS.`;
-  }else if(type==='planner'){
-    const P=computePlanner(rows,DB.cartons,DB.targetDays||PLAN_DEFAULT_DAYS);
-    $('#mTitle').textContent='Name this Shipment plan';
+  }else if(type==='inventory'){
+    const I=computeInventory(rows,curSalesRows());
+    $('#mTitle').textContent='Name this Inventory report';
     $('#mDesc').textContent='A label you\u2019ll recognise — today\u2019s date works well.';
-    $('#mInfo').innerHTML=`Found <b>${num(P.items.length)}</b> products · <b>${P.needAtt}</b> need topping up to ${P.days} days. ${P.needCarton?`<b>${P.needCarton}</b> still need a carton size.`:'Carton sizes ready.'}`;
+    $('#mInfo').innerHTML=`Found <b>${num(I.items.length)}</b> products · <b>${num(I.totUnits)}</b> units on hand · <b>${I.out}</b> out of stock${I.unsellUnits?` · <b>${I.unsellUnits}</b> unsellable`:''}.`;
   }else{
     const M=compute(rows);
     $('#mTitle').textContent='Name this Sales period';
@@ -1889,6 +1890,9 @@ async function processNextFile(){
     }else if(type==='ads'){
       const {rows}=parseAds(aoa);
       openAddModal('ads',rows,file.name);
+    }else if(type==='inventory'){
+      const {rows}=parseInventory(aoa);
+      openAddModal('inventory',rows,file.name);
     }else if(type==='sales'){
       const {rows,hadSessions}=mapColumns(aoa);
       openAddModal('sales',rows,file.name,{hadSessions});
@@ -1912,6 +1916,8 @@ function commitPending(){
     DB.returns=DB.returns||[];DB.returns.push(base);DB.currentReturnsId=id;DB.view='returns';
   }else if(pending.type==='ads'){
     DB.ads=DB.ads||[];DB.ads.push(base);DB.currentAdsId=id;DB.view='ads';
+  }else if(pending.type==='inventory'){
+    DB.inventory=DB.inventory||[];DB.inventory.push(base);DB.currentInvId=id;DB.view='inventory';
   }else{
     DB.periods.push(Object.assign(base,{hadSessions:pending.extra&&pending.extra.hadSessions}));DB.currentId=id;DB.view='sales';
   }
@@ -1926,7 +1932,7 @@ function openManage(){
     let sub;
     if(DB.view==='returns'){const R=computeReturns(p.rows,curSalesRows());sub=`${num(R.totQty)} returns · ${p.rows.length} lines`;}
     else if(DB.view==='ads'){const A=computeAds(p.rows);sub=`${fUSD(A.totSpend)} spend · ${A.acos.toFixed(1)}% ACOS · ${A.groups.length} groups`;}
-    else if(DB.view==='planner'){const P=computePlanner(p.rows,DB.cartons,DB.targetDays||PLAN_DEFAULT_DAYS);sub=`${P.totalCartons} cartons · ${P.productsToShip} products to ship`;}
+    else if(DB.view==='inventory'){const I=computeInventory(p.rows,curSalesRows());sub=`${num(I.totUnits)} units · ${I.out} out of stock`;}
     else{const M=compute(p.rows);sub=`${fUSD(M.totSales)} · ${num(M.totUnits)} units · ${p.rows.length} products`;}
     return `<div class="mng-row${p.id===curId?' cur':''}" data-id="${p.id}">
       <div class="mi"><div class="mn" data-go="${p.id}" style="cursor:pointer" title="Open">${p.label}</div><div class="md">${sub}</div></div>
@@ -1936,7 +1942,7 @@ function openManage(){
       <button class="del" data-del="${p.id}" title="Remove">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
       </button></div>`;}).join('') || ('<div style="color:var(--ink-faint);padding:14px">Nothing saved for this country yet.</div>');
-  $('#mngTitle').textContent={returns:'Saved returns reports',ads:'Saved ads reports',planner:'Saved shipment plans'}[DB.view]||'Saved sales periods';
+  $('#mngTitle').textContent={returns:'Saved returns reports',ads:'Saved ads reports',inventory:'Saved inventory reports'}[DB.view]||'Saved sales periods';
   $('#mngScrim').classList.add('on');
 }
 function findActive(id){return activeList().find(x=>x.id===id);}
@@ -2003,8 +2009,9 @@ function wire(){
     if(del){const id=del.dataset.del;
       if(DB.view==='returns'){DB.returns=(DB.returns||[]).filter(p=>p.id!==id);if(DB.currentReturnsId===id){const o=orderedReturns();DB.currentReturnsId=o.length?o[o.length-1].id:null;}}
       else if(DB.view==='ads'){DB.ads=(DB.ads||[]).filter(p=>p.id!==id);if(DB.currentAdsId===id){const o=orderedAds();DB.currentAdsId=o.length?o[o.length-1].id:null;}}
+      else if(DB.view==='inventory'){DB.inventory=(DB.inventory||[]).filter(p=>p.id!==id);if(DB.currentInvId===id){const o=orderedInv();DB.currentInvId=o.length?o[o.length-1].id:null;}}
       else{DB.periods=DB.periods.filter(p=>p.id!==id);if(DB.currentId===id){const o=ordered();DB.currentId=o.length?o[o.length-1].id:null;}}
-      const stillHas=(DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length);
+      const stillHas=(DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length);
       openManage();stillHas?render():showEmpty();   // update screen immediately
       dbSave(DB);                                    // persist in background
       return;}
@@ -2016,14 +2023,15 @@ function wire(){
 (async function(){
   wire();
   const loaded=await dbLoad();
-  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.planner&&loaded.planner.length))){
+  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.inventory&&loaded.inventory.length))){
     DB=loaded;
-    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.planner=DB.planner||[];DB.cartons=DB.cartons||{};DB.targetDays=DB.targetDays||70;DB.activeCountry=DB.activeCountry||'';DB.lastCountry=DB.lastCountry||'';
+    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.inventory=DB.inventory||[];DB.cartons=DB.cartons||{};DB.targetDays=DB.targetDays||70;DB.activeCountry=DB.activeCountry||'';DB.lastCountry=DB.lastCountry||'';
     if(!presentViews().length){const cs=countriesList();DB.activeCountry=cs.length?cs[0]:'';}
     if(!DB.view||!presentViews().includes(DB.view))DB.view=presentViews()[0]||'sales';
     {const sv=ordered();if(!sv.find(p=>p.id===DB.currentId))DB.currentId=sv.length?sv[sv.length-1].id:null;}
     {const rv=orderedReturns();if(!rv.find(p=>p.id===DB.currentReturnsId))DB.currentReturnsId=rv.length?rv[rv.length-1].id:null;}
     {const av=orderedAds();if(!av.find(p=>p.id===DB.currentAdsId))DB.currentAdsId=av.length?av[av.length-1].id:null;}
+    {const iv=orderedInv();if(!iv.find(p=>p.id===DB.currentInvId))DB.currentInvId=iv.length?iv[iv.length-1].id:null;}
     render();
   }
   else showEmpty();
