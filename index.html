@@ -715,7 +715,6 @@ function detectType(aoa){
   const has=s=>h.some(x=>x.includes(s));
   const hasExact=s=>h.some(x=>x===s);
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
-  if(has('asin')&&has('adname')) return 'adgroup';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
   if(has('afnfulfillablequantity')||has('afntotalquantity')||(has('cartoncost')&&(has('qty')||has('quantity')))) return 'inventory';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
@@ -838,7 +837,8 @@ function parseAds(aoa){
     cost:find([h=>h.includes('totalcost'),h=>h.includes('spend'),h=>h.includes('cost')]),
     cpc:find([h=>h.includes('cpc')]),
     purch:find([h=>h.includes('purchase'),h=>h.includes('orders'),h=>h.includes('conversions')]),
-    sales:find([h=>h.includes('sales')])
+    sales:find([h=>h.includes('sales')]),
+    country:find([h=>h==='country',h=>h.includes('country'),h=>h.includes('marketplace')])
   };
   if(col.cost<0&&col.impr<0) throw new Error("This doesn't look like an Ads report. It should have impressions, clicks, cost and sales columns.");
   const rows=[];
@@ -858,7 +858,9 @@ function parseAds(aoa){
     });
   }
   if(!rows.length) throw new Error("No ad rows found below the header.");
-  return {rows};
+  let country='';
+  if(col.country>=0){const counts={};for(let i=hi+1;i<aoa.length;i++){const r=aoa[i];if(!r)continue;const c=String(r[col.country]||'').trim();if(c)counts[c]=(counts[c]||0)+1;}country=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||'';}
+  return {rows,country};
 }
 function isPaused(s){return /paus/i.test(s);}
 function computeAds(rows){
@@ -2025,7 +2027,7 @@ function renderCoverage(){
   }).join('')+(DB.coverage.product?`<div class="cv-card cv-card-ghost"><div class="cv-c-top"><span class="cv-c-name">Product list</span>
       <button class="cv-rm" data-rmproduct="1" title="Delete the product list">Remove</button></div>
       <div class="cv-c-sub" style="margin-top:8px">${num(C.total)} ASINs · ${DB.coverage.product.fileName||''}</div>
-      <div class="cv-c-sub" style="margin-top:4px;color:var(--ink-faint)">Drop an ad-group file to add a country.</div></div>`:'');
+      <div class="cv-c-sub" style="margin-top:6px;color:var(--onyx-deep)"><b>+ Add a country:</b> use “Add report” to drop in any country\u2019s ads file (UK, Germany, Italy…). The country is detected automatically.</div></div>`:'');
 
   // filter chips (All + one per country's missing)
   const chips=[{k:'all',lab:'All products'},{k:'gaps',lab:'Has a gap'},...C.countries.map(c=>({k:'miss:'+c,lab:'Missing in '+countryLabel(c)}))];
@@ -2045,7 +2047,7 @@ function renderCoverage(){
     `<td>${r.missCount?`<b style="color:var(--clay)">${r.missCount}</b>`:'<span class="muted">—</span>'}</td></tr>`).join('');
   $('#cvTableWrap').innerHTML=C.countries.length
     ? `<table class="tbl cv-tbl"><thead>${head}</thead><tbody>${body}</tbody></table>`
-    : `<div class="cv-empty">Product list loaded (<b>${C.total}</b> ASINs). Now drop in each country\u2019s ad-group file to see the gaps.</div>`;
+    : `<div class="cv-empty">Product list loaded (<b>${C.total}</b> ASINs). Now use <b>Add report</b> to drop in each country\u2019s ads file (UK, France, Germany, Italy…) — the country is detected automatically, and each becomes a column here.</div>`;
   $('#cvCount').textContent=C.countries.length?`${shown.length} products shown${shown.length>500?' (first 500)':''}`:'';
 
   $('#cvFoot').innerHTML=`✓ = advertised in that country\u2019s ad group · ✗ = <b>not advertised</b> (missing). Compared by ASIN against your product list. Uploading a new product list or a country\u2019s ad group replaces the old one.`;
@@ -2246,7 +2248,8 @@ function openAddModal(type,rows,fileName,extra){
     $('#mCountry').value=DB.lastCountry&&/^(uk|france|germany|italy)$/i.test(DB.lastCountry)?DB.lastCountry:'';
   }else{
     $('#countryOptions').innerHTML=cs.map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');
-    $('#mCountry').value=(extra&&extra.is3pl)?(DB.lastCountry&&/3pl|third/i.test(DB.lastCountry)?DB.lastCountry:'3PL'):(DB.activeCountry||DB.lastCountry||'');
+    if(type==='ads'&&extra&&extra.detectedCountry){$('#mCountry').value=extra.detectedCountry;}
+    else $('#mCountry').value=(extra&&extra.is3pl)?(DB.lastCountry&&/3pl|third/i.test(DB.lastCountry)?DB.lastCountry:'3PL'):(DB.activeCountry||DB.lastCountry||'');
   }
   $('#mQueue').textContent=fileQueue.length?`${fileQueue.length} more file${fileQueue.length>1?'s':''} after this`:'';
   if(type==='returns'){
@@ -2256,9 +2259,11 @@ function openAddModal(type,rows,fileName,extra){
     $('#mInfo').innerHTML=`Found <b>${num(R.totQty)}</b> returns across <b>${R.products.length}</b> products. Top reason: <b>${R.topReason?R.topReason.label:'—'}</b>.`;
   }else if(type==='ads'){
     const A=computeAds(rows);
+    const nAsins=new Set((rows||[]).map(r=>r.asin).filter(Boolean)).size;
     $('#mTitle').textContent='Name this Ads report';
     $('#mDesc').textContent='A label you\u2019ll recognise — the period it covers works well.';
-    $('#mInfo').innerHTML=`Found <b>${A.groups.length}</b> ad groups · <b>${fUSD(A.totSpend)}</b> spend → <b>${fUSD(A.totSales)}</b> sales at <b>${A.acos.toFixed(1)}%</b> ACOS.`;
+    $('#mInfo').innerHTML=`Found <b>${A.groups.length}</b> ad groups · <b>${fUSD(A.totSpend)}</b> spend → <b>${fUSD(A.totSales)}</b> sales at <b>${A.acos.toFixed(1)}%</b> ACOS.`+
+      (nAsins?`<br><span style="color:var(--onyx-deep)">Also feeds <b>Ad Coverage</b>: ${num(nAsins)} advertised ASINs — set the country below.</span>`:'');
   }else if(type==='inventory'){
     const is3pl=extra&&extra.is3pl;
     const I=computeInventory(rows,curSalesRows());
@@ -2319,8 +2324,8 @@ async function processNextFile(){
       const {rows}=parseReturns(aoa);
       openAddModal('returns',rows,file.name);
     }else if(type==='ads'){
-      const {rows}=parseAds(aoa);
-      openAddModal('ads',rows,file.name);
+      const {rows,country}=parseAds(aoa);
+      openAddModal('ads',rows,file.name,{detectedCountry:country});
     }else if(type==='inventory'){
       const {rows,is3pl}=parseInventory(aoa);
       openAddModal('inventory',rows,file.name,{is3pl});
@@ -2359,6 +2364,13 @@ function commitPending(){
     DB.returns=DB.returns||[];DB.returns.push(base);DB.currentReturnsId=id;DB.view='returns';
   }else if(pending.type==='ads'){
     DB.ads=DB.ads||[];DB.ads.push(base);DB.currentAdsId=id;DB.view='ads';
+    // if this ad file lists ASINs, also feed the Ad Coverage comparison for this country
+    const asins=[...new Set((pending.rows||[]).map(r=>r.asin).filter(Boolean))].map(a=>({asin:a,name:''}));
+    if(country&&asins.length){
+      DB.coverage=DB.coverage||{product:null,groups:{}};
+      DB.coverage.groups=DB.coverage.groups||{};
+      DB.coverage.groups[country]={asins,fileName:pending.fileName,added:Date.now(),label,fromAds:true};
+    }
   }else if(pending.type==='inventory'){
     DB.inventory=DB.inventory||[];DB.inventory.push(Object.assign(base,{is3pl:pending.extra&&pending.extra.is3pl}));DB.currentInvId=id;DB.view='inventory';
   }else if(pending.type==='productlist'){
