@@ -53,8 +53,8 @@
   .cv-card-ghost{background:var(--surface-2);border-style:dashed}
   .cv-c-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .cv-c-name{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
-  .cv-rm{border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:5px}
-  .cv-rm:hover{background:var(--clay);color:#fff}
+  .cv-rm{border:1px solid var(--vein);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;line-height:1;padding:5px 10px;border-radius:999px}
+  .cv-rm:hover{background:var(--clay);color:#fff;border-color:var(--clay)}
   .cv-c-miss{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--clay);margin-top:6px;line-height:1}
   .cv-c-lab{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
   .cv-c-bar{height:6px;border-radius:3px;background:var(--marble);margin:10px 0 6px;overflow:hidden}
@@ -1208,12 +1208,14 @@ function countryHasData(c){c=c||'';return DB.periods.some(x=>(x.country||'')===c
 function curSalesRows(){const p=DB.periods.find(x=>x.id===DB.currentId);return p?p.rows:null;}
 function curReturnsRows(){const p=(DB.returns||[]).find(x=>x.id===DB.currentReturnsId);return p?p.rows:null;}
 
-const VIEWS={sales:{label:'Sales',list:()=>DB.periods.filter(sameC),cur:'currentId'},
-  returns:{label:'Returns',list:()=>(DB.returns||[]).filter(sameC),cur:'currentReturnsId'},
-  ads:{label:'Ads',list:()=>(DB.ads||[]).filter(sameC),cur:'currentAdsId'},
-  inventory:{label:'Inventory',list:()=>(DB.inventory||[]).filter(sameC),cur:'currentInvId'},
-  ledger:{label:'All Stock',list:()=>invCountryKeys().length>=2?[1]:[],cur:null},
-  coverage:{label:'Ad Coverage',list:()=>coverageActive()?[1]:[],cur:null}};
+const VIEWS={sales:{label:'Sales',list:()=>DB.periods.filter(sameC),has:()=>DB.periods.length>0,cur:'currentId'},
+  returns:{label:'Returns',list:()=>(DB.returns||[]).filter(sameC),has:()=>(DB.returns||[]).length>0,cur:'currentReturnsId'},
+  ads:{label:'Ads',list:()=>(DB.ads||[]).filter(sameC),has:()=>(DB.ads||[]).length>0,cur:'currentAdsId'},
+  inventory:{label:'Inventory',list:()=>(DB.inventory||[]).filter(sameC),has:()=>(DB.inventory||[]).length>0,cur:'currentInvId'},
+  ledger:{label:'All Stock',list:()=>invCountryKeys().length>=2?[1]:[],has:()=>invCountryKeys().length>=2,cur:null},
+  coverage:{label:'Ad Coverage',list:()=>coverageActive()?[1]:[],has:()=>coverageActive(),cur:null}};
+const SCOPED=['sales','returns','ads','inventory'];
+function countryHasView(c,view){const s=DB.activeCountry;DB.activeCountry=c;const n=VIEWS[view].list().length;DB.activeCountry=s;return n>0;}
 function orderedAllInv(){return [...(DB.inventory||[])].sort((a,b)=>a.added-b.added);}
 function latestInvByCountry(){const m={};orderedAllInv().forEach(x=>{m[x.country||'']=x;});return m;}
 function invCountryKeys(){return Object.keys(latestInvByCountry());}
@@ -1221,7 +1223,7 @@ function activeList(){return VIEWS[DB.view].list();}
 function activeCurId(){return DB[VIEWS[DB.view].cur];}
 function setActiveCur(id){DB[VIEWS[DB.view].cur]=id;}
 function activeOrdered(){return [...activeList()].sort((a,b)=>a.added-b.added);}
-function presentViews(){return Object.keys(VIEWS).filter(v=>VIEWS[v].list().length);}
+function presentViews(){return Object.keys(VIEWS).filter(v=>VIEWS[v].has?VIEWS[v].has():VIEWS[v].list().length);}
 
 /* ---------- rendering ---------- */
 function convColor(v){
@@ -1338,6 +1340,11 @@ function render(){
   const present=presentViews();
   if(!present.length){showEmpty();return;}
   if(!present.includes(DB.view))DB.view=present[0];
+  // tabs are global; if the active country lacks the current scoped view's data, hop to a country that has it
+  if(SCOPED.includes(DB.view)&&!VIEWS[DB.view].list().length){
+    const c=countriesList().find(cc=>countryHasView(cc,DB.view));
+    if(c!=null)DB.activeCountry=c;
+  }
   $('#empty').style.display='none';
   refreshCountrySwitch();
   refreshViewSwitch();
@@ -2011,12 +2018,12 @@ function renderCoverage(){
   $('#cvCards').innerHTML=C.perCountry.map(pc=>{
     const pct=pc.total?Math.round(pc.advertised/pc.total*100):0;
     return `<div class="cv-card"><div class="cv-c-top"><span class="cv-c-name">${countryLabel(pc.country)}</span>
-      <button class="cv-rm" data-rmcountry="${pc.country.replace(/"/g,'&quot;')}" title="Remove this country">✕</button></div>
+      <button class="cv-rm" data-rmcountry="${pc.country.replace(/"/g,'&quot;')}" title="Delete this country's ad group">Remove</button></div>
       <div class="cv-c-miss">${num(pc.missing)}</div><div class="cv-c-lab">not advertised</div>
       <div class="cv-c-bar"><span style="width:${pct}%"></span></div>
       <div class="cv-c-sub">${num(pc.advertised)} of ${num(pc.total)} advertised${pc.extra?` · ${pc.extra} extra`:''}</div></div>`;
   }).join('')+(DB.coverage.product?`<div class="cv-card cv-card-ghost"><div class="cv-c-top"><span class="cv-c-name">Product list</span>
-      <button class="cv-rm" data-rmproduct="1" title="Remove product list">✕</button></div>
+      <button class="cv-rm" data-rmproduct="1" title="Delete the product list">Remove</button></div>
       <div class="cv-c-sub" style="margin-top:8px">${num(C.total)} ASINs · ${DB.coverage.product.fileName||''}</div>
       <div class="cv-c-sub" style="margin-top:4px;color:var(--ink-faint)">Drop an ad-group file to add a country.</div></div>`:'');
 
@@ -2419,10 +2426,14 @@ function wire(){
   $('#viewSwitch').onclick=e=>{const b=e.target.closest('button');if(!b)return;DB.view=b.dataset.v;dbSave(DB);render();};
   $('#countrySel').onchange=e=>{
     DB.activeCountry=e.target.value;
+    if(!(SCOPED.includes(DB.view)&&countryHasView(DB.activeCountry,DB.view))){
+      const v=SCOPED.find(vv=>countryHasView(DB.activeCountry,vv));
+      if(v)DB.view=v;
+    }
     const sv=ordered();DB.currentId=sv.length?sv[sv.length-1].id:null;
     const rv=orderedReturns();DB.currentReturnsId=rv.length?rv[rv.length-1].id:null;
     const av=orderedAds();DB.currentAdsId=av.length?av[av.length-1].id:null;
-    if(!presentViews().includes(DB.view))DB.view=presentViews()[0]||'sales';
+    const iv=orderedInv();DB.currentInvId=iv.length?iv[iv.length-1].id:null;
     render();dbSave(DB);
   };
   $('#invFilters').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;invFilter=b.dataset.f;renderInventory();};
