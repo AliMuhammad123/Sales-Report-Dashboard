@@ -47,6 +47,22 @@
   tr.lg-tot td{background:var(--marble);font-weight:700;color:var(--ink);border-bottom:2px solid var(--vein);position:sticky;top:0}
   tr.lg-tot td:first-child{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
   .lg-tbl td.muted{color:var(--ink-faint)}
+  /* ad coverage */
+  .cv-cards{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px}
+  .cv-card{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--vein);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+  .cv-card-ghost{background:var(--surface-2);border-style:dashed}
+  .cv-c-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cv-c-name{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .cv-rm{border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:5px}
+  .cv-rm:hover{background:var(--clay);color:#fff}
+  .cv-c-miss{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--clay);margin-top:6px;line-height:1}
+  .cv-c-lab{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+  .cv-c-bar{height:6px;border-radius:3px;background:var(--marble);margin:10px 0 6px;overflow:hidden}
+  .cv-c-bar span{display:block;height:100%;background:var(--onyx);border-radius:3px}
+  .cv-c-sub{font-size:12px;color:var(--ink-soft)}
+  .cv-tbl td.cv-yes{color:var(--onyx-deep);font-weight:700}
+  .cv-tbl td.cv-no{color:var(--clay);font-weight:700;background:rgba(168,89,62,.06)}
+  .cv-empty{padding:26px;text-align:center;color:var(--ink-soft);background:var(--surface-2);border:1px dashed var(--vein);border-radius:14px;line-height:1.6}
   .periodsel label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
   select.psel{appearance:none;background:var(--surface);border:1px solid var(--vein);border-radius:9px;padding:8px 30px 8px 12px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;
     background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235C6055' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
@@ -517,6 +533,28 @@
 
     <footer id="lgFoot"></footer>
   </section>
+
+  <!-- ad coverage dashboard -->
+  <section class="dash" id="coverageDash">
+    <div class="period-head">
+      <div><span class="pl" style="color:var(--onyx-deep)">Advertising</span><h2 id="cvTitle">Ad coverage</h2><div class="pmeta" id="cvMeta"></div></div>
+      <div class="cmp-flag" id="cvFlag"></div>
+    </div>
+
+    <div class="kpis" id="cvKpis"></div>
+
+    <div class="cv-cards" id="cvCards"></div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="sec-num">Coverage matrix</span><div class="t">Which products aren't advertised</div>
+        <div class="d">✓ = advertised in that country · ✗ = <b>not advertised</b>. Tap a filter to see the gaps for one country.</div></div>
+      <div class="chips" id="cvFilters"></div>
+      <div id="cvTableWrap" style="overflow-x:auto"></div>
+      <div class="tcount" id="cvCount"></div>
+    </div>
+
+    <footer id="cvFoot"></footer>
+  </section>
 </div>
 
 <!-- add/name modal -->
@@ -526,9 +564,11 @@
   <div id="mBody">
     <label>Label</label>
     <input type="text" id="mLabel" placeholder="e.g. June 2026 or Week 26">
+    <div id="mCountryRow">
     <label style="margin-top:14px">Country / marketplace <span style="color:var(--ink-faint);font-weight:400;text-transform:none;letter-spacing:0">(keeps each country separate)</span></label>
     <input type="text" id="mCountry" list="countryOptions" placeholder="e.g. UK, US, Germany — leave blank if just one">
     <datalist id="countryOptions"></datalist>
+    </div>
     <div class="parse-info" id="mInfo"></div>
     <div class="queue-note" id="mQueue"></div>
   </div>
@@ -673,10 +713,13 @@ function detectType(aoa){
   if(!aoa||!aoa.length) return 'unknown';
   const h=aoa[headerRow(aoa)].map(norm);
   const has=s=>h.some(x=>x.includes(s));
+  const hasExact=s=>h.some(x=>x===s);
   if(has('returndate')||(has('reason')&&has('detaileddisposition'))||(has('reason')&&has('asin')&&has('quantity'))) return 'returns';
+  if(has('asin')&&has('adname')) return 'adgroup';
   if(has('acos')||has('roas')||(has('impression')&&has('clicks')&&(has('spend')||has('totalcost')))) return 'ads';
   if(has('afnfulfillablequantity')||has('afntotalquantity')||(has('cartoncost')&&(has('qty')||has('quantity')))) return 'inventory';
   if(has('unitsordered')||has('orderedproductsales')) return 'sales';
+  if(hasExact('asin')&&!has('unitsordered')&&!has('reason')&&!has('adname')&&!has('afnfulfillablequantity')&&!has('cartoncost')&&!has('acos')&&!has('impression')) return 'productlist';
   return 'unknown';
 }
 
@@ -1025,6 +1068,61 @@ function computeInventory(rows,salesRows){
     out:cnt('out'),low:cnt('low'),high:cnt('high'),unsellCount:items.filter(i=>i.unsell>0).length,outSelling};
 }
 
+/* ---------- AD COVERAGE (product list vs ad-group ASINs) ---------- */
+function asinCol(header){return header.findIndex(h=>h==='asin')>=0?header.findIndex(h=>h==='asin'):header.findIndex(h=>h.includes('asin'));}
+function parseProductList(aoa){
+  const hi=headerRow(aoa);const header=aoa[hi].map(norm);
+  const ai=asinCol(header);
+  const ni=header.findIndex(h=>h.includes('productname')||h.includes('title')||h.includes('name'));
+  if(ai<0) throw new Error("This product list needs an ASIN column.");
+  const seen={},asins=[];
+  for(let i=hi+1;i<aoa.length;i++){
+    const r=aoa[i];if(!r)continue;const a=String(r[ai]||'').trim();if(!a||seen[a])continue;seen[a]=1;
+    asins.push({asin:a,name:ni>=0?String(r[ni]||'').trim():''});
+  }
+  if(!asins.length) throw new Error("No ASINs found in the product list.");
+  return {asins};
+}
+function parseAdGroup(aoa){
+  const hi=headerRow(aoa);const header=aoa[hi].map(norm);
+  const ai=asinCol(header);
+  const ni=header.findIndex(h=>h.includes('adname')||h.includes('productname')||h.includes('title'));
+  if(ai<0) throw new Error("This ad-group file needs an ASIN column.");
+  const seen={},asins=[];
+  for(let i=hi+1;i<aoa.length;i++){
+    const r=aoa[i];if(!r)continue;const a=String(r[ai]||'').trim();if(!a||seen[a])continue;seen[a]=1;
+    asins.push({asin:a,name:ni>=0?String(r[ni]||'').trim():''});
+  }
+  if(!asins.length) throw new Error("No advertised ASINs found in this ad-group file.");
+  return {asins};
+}
+function coverageActive(){return !!(DB.coverage&&(DB.coverage.product||Object.keys(DB.coverage.groups||{}).length));}
+function computeCoverage(){
+  const cov=DB.coverage||{product:null,groups:{}};
+  const prod=cov.product?cov.product.asins:[];
+  const prodSet=new Set(prod.map(p=>p.asin));
+  const nameMap={};prod.forEach(p=>{if(p.name)nameMap[p.asin]=p.name;});
+  const groups=cov.groups||{};
+  Object.values(groups).forEach(g=>g.asins.forEach(a=>{if(a.name&&!nameMap[a.asin])nameMap[a.asin]=a.name;}));
+  const PRIO={'UK':0,'GB':0,'FRANCE':1,'FR':1,'GERMANY':2,'DE':2,'ITALY':3,'IT':3,'SPAIN':4,'ES':4};
+  const countries=Object.keys(groups).sort((a,b)=>{const pa=PRIO[a.toUpperCase()],pb=PRIO[b.toUpperCase()];const va=pa==null?50:pa,vb=pb==null?50:pb;if(va!==vb)return va-vb;return a.localeCompare(b);});
+  const gSets={};countries.forEach(c=>{gSets[c]=new Set(groups[c].asins.map(a=>a.asin));});
+  const rows=[...prodSet].map(asin=>{
+    const inC={};let missCount=0;
+    countries.forEach(c=>{const adv=gSets[c].has(asin);inC[c]=adv;if(!adv)missCount++;});
+    return {asin,name:nameMap[asin]||asin,inC,missCount};
+  }).sort((a,b)=>b.missCount-a.missCount||a.asin.localeCompare(b.asin));
+  const perCountry=countries.map(c=>{
+    const advertised=[...prodSet].filter(a=>gSets[c].has(a)).length;
+    const missing=prodSet.size-advertised;
+    const extra=[...gSets[c]].filter(a=>!prodSet.has(a)).length;
+    return {country:c,label:countryLabel(c),advertised,missing,extra,total:prodSet.size};
+  });
+  const fullyCovered=rows.filter(r=>r.missCount===0).length;
+  const totalGaps=perCountry.reduce((a,c)=>a+c.missing,0);
+  return {countries,rows,perCountry,total:prodSet.size,fullyCovered,totalGaps,hasProduct:!!cov.product};
+}
+
 function mapColumns(aoa){
   if(!aoa||aoa.length<2) throw new Error("That file doesn't have any rows of data.");
   // find header row (first row that contains 'title' or 'asin' or 'units')
@@ -1093,7 +1191,7 @@ function compute(rows){
 }
 
 /* ---------- state ---------- */
-let DB={periods:[],returns:[],ads:[],inventory:[],planner:[],cartons:{},targetDays:70,activeCountry:'',lastCountry:'',currentId:null,currentReturnsId:null,currentAdsId:null,currentInvId:null,currentPlanId:null,view:'sales'};
+let DB={periods:[],returns:[],ads:[],inventory:[],coverage:{product:null,groups:{}},cartons:{},targetDays:70,activeCountry:'',lastCountry:'',currentId:null,currentReturnsId:null,currentAdsId:null,currentInvId:null,currentPlanId:null,view:'sales'};
 let charts={};
 let pending=null; // {type, label, rows, fileName, hadSessions}
 
@@ -1114,7 +1212,8 @@ const VIEWS={sales:{label:'Sales',list:()=>DB.periods.filter(sameC),cur:'current
   returns:{label:'Returns',list:()=>(DB.returns||[]).filter(sameC),cur:'currentReturnsId'},
   ads:{label:'Ads',list:()=>(DB.ads||[]).filter(sameC),cur:'currentAdsId'},
   inventory:{label:'Inventory',list:()=>(DB.inventory||[]).filter(sameC),cur:'currentInvId'},
-  ledger:{label:'All Stock',list:()=>invCountryKeys().length>=2?[1]:[],cur:null}};
+  ledger:{label:'All Stock',list:()=>invCountryKeys().length>=2?[1]:[],cur:null},
+  coverage:{label:'Ad Coverage',list:()=>coverageActive()?[1]:[],cur:null}};
 function orderedAllInv(){return [...(DB.inventory||[])].sort((a,b)=>a.added-b.added);}
 function latestInvByCountry(){const m={};orderedAllInv().forEach(x=>{m[x.country||'']=x;});return m;}
 function invCountryKeys(){return Object.keys(latestInvByCountry());}
@@ -1233,7 +1332,7 @@ function refreshViewSwitch(){
 }
 
 function render(){
-  const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length;
+  const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length||coverageActive();
   if(!anyData){showEmpty();return;}
   if(!countryHasData(DB.activeCountry)){const cs=countriesList();const withData=cs.find(countryHasData);DB.activeCountry=withData!=null?withData:(cs.length?cs[0]:'');}
   const present=presentViews();
@@ -1242,14 +1341,14 @@ function render(){
   $('#empty').style.display='none';
   refreshCountrySwitch();
   refreshViewSwitch();
-  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');
-  if(DB.view==='ledger'){
+  $('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');$('#coverageDash').classList.remove('on');
+  if(DB.view==='ledger'||DB.view==='coverage'){
     $('#periodSelWrap').style.display='none';
     $('#countryWrap').style.display='none';
     $('#manageBtn').style.display='none';
     $('#exportWrap').style.display='block';
-    $('#ledgerDash').classList.add('on');
-    renderLedger();
+    if(DB.view==='ledger'){$('#ledgerDash').classList.add('on');renderLedger();}
+    else{$('#coverageDash').classList.add('on');renderCoverage();}
     return;
   }
   $('#periodSelWrap').style.display='flex';
@@ -1885,7 +1984,67 @@ function renderLedger(){
     `Total base cost = total units × (carton cost ÷ units per carton). ${L.rows.length-costed>0?`${L.rows.length-costed} products have no 3PL base cost yet, so they aren\u2019t valued.`:''}`;
 }
 
-function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+/* ---------- ad coverage (which ASINs aren't advertised, per country) ---------- */
+let coverageFilter='all';
+function renderCoverage(){
+  const C=computeCoverage();
+  $('#cvTitle').textContent='Ad coverage';
+  $('#cvMeta').textContent=C.hasProduct?`${C.total} products · ${C.countries.length} countr${C.countries.length===1?'y':'ies'} loaded`:'no product list yet';
+
+  if(!C.hasProduct){
+    $('#cvFlag').innerHTML='';
+    $('#cvKpis').innerHTML='';
+    $('#cvCards').innerHTML='';
+    $('#cvTableWrap').innerHTML=`<div class="cv-empty"><b>Upload your product list first.</b><br>It\u2019s the master list of ASINs in the category. Then drop in each country\u2019s ad-group file (UK, France, Germany, Italy) and I\u2019ll show which products aren\u2019t advertised where.</div>`;
+    $('#cvCount').textContent='';$('#cvFoot').innerHTML='';return;
+  }
+  $('#cvFlag').innerHTML=C.countries.length?`Comparing against <b>${C.countries.map(c=>countryLabel(c)).join(' · ')}</b>`:`Now drop in each country\u2019s ad-group file.`;
+
+  $('#cvKpis').innerHTML=[
+    {lab:'Products',val:num(C.total),accent:true,sub:'in the category'},
+    {lab:'Countries',val:num(C.countries.length),sub:'ad groups loaded'},
+    {lab:'Total Gaps',val:num(C.totalGaps),accent:true,sub:'ASIN×country not advertised'},
+    {lab:'Fully Covered',val:num(C.fullyCovered),sub:'advertised everywhere'}
+  ].map(k=>`<div class="kpi${k.accent?' accent':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
+
+  // per-country cards
+  $('#cvCards').innerHTML=C.perCountry.map(pc=>{
+    const pct=pc.total?Math.round(pc.advertised/pc.total*100):0;
+    return `<div class="cv-card"><div class="cv-c-top"><span class="cv-c-name">${countryLabel(pc.country)}</span>
+      <button class="cv-rm" data-rmcountry="${pc.country.replace(/"/g,'&quot;')}" title="Remove this country">✕</button></div>
+      <div class="cv-c-miss">${num(pc.missing)}</div><div class="cv-c-lab">not advertised</div>
+      <div class="cv-c-bar"><span style="width:${pct}%"></span></div>
+      <div class="cv-c-sub">${num(pc.advertised)} of ${num(pc.total)} advertised${pc.extra?` · ${pc.extra} extra`:''}</div></div>`;
+  }).join('')+(DB.coverage.product?`<div class="cv-card cv-card-ghost"><div class="cv-c-top"><span class="cv-c-name">Product list</span>
+      <button class="cv-rm" data-rmproduct="1" title="Remove product list">✕</button></div>
+      <div class="cv-c-sub" style="margin-top:8px">${num(C.total)} ASINs · ${DB.coverage.product.fileName||''}</div>
+      <div class="cv-c-sub" style="margin-top:4px;color:var(--ink-faint)">Drop an ad-group file to add a country.</div></div>`:'');
+
+  // filter chips (All + one per country's missing)
+  const chips=[{k:'all',lab:'All products'},{k:'gaps',lab:'Has a gap'},...C.countries.map(c=>({k:'miss:'+c,lab:'Missing in '+countryLabel(c)}))];
+  if(coverageFilter!=='all'&&coverageFilter!=='gaps'&&!C.countries.map(c=>'miss:'+c).includes(coverageFilter))coverageFilter='all';
+  $('#cvFilters').innerHTML=chips.map(c=>{
+    let n; if(c.k==='all')n=C.rows.length; else if(c.k==='gaps')n=C.rows.filter(r=>r.missCount>0).length; else {const cc=c.k.slice(5);n=C.rows.filter(r=>r.inC[cc]===false).length;}
+    return `<button class="chip${coverageFilter===c.k?' on':''}" data-cvf="${c.k}">${c.lab}<span class="chip-n">${num(n)}</span></button>`;
+  }).join('');
+
+  // matrix table
+  let shown=C.rows;
+  if(coverageFilter==='gaps')shown=C.rows.filter(r=>r.missCount>0);
+  else if(coverageFilter.startsWith('miss:')){const cc=coverageFilter.slice(5);shown=C.rows.filter(r=>r.inC[cc]===false);}
+  const head=`<tr><th style="text-align:left">Product</th>${C.countries.map(c=>`<th>${countryLabel(c)}</th>`).join('')}<th>Missing in</th></tr>`;
+  const body=shown.slice(0,500).map(r=>`<tr><td><div class="pname">${short(r.name,54)}</div><div class="pasin">${r.asin}</div></td>`+
+    C.countries.map(c=>r.inC[c]?`<td class="cv-yes">✓</td>`:`<td class="cv-no">✗</td>`).join('')+
+    `<td>${r.missCount?`<b style="color:var(--clay)">${r.missCount}</b>`:'<span class="muted">—</span>'}</td></tr>`).join('');
+  $('#cvTableWrap').innerHTML=C.countries.length
+    ? `<table class="tbl cv-tbl"><thead>${head}</thead><tbody>${body}</tbody></table>`
+    : `<div class="cv-empty">Product list loaded (<b>${C.total}</b> ASINs). Now drop in each country\u2019s ad-group file to see the gaps.</div>`;
+  $('#cvCount').textContent=C.countries.length?`${shown.length} products shown${shown.length>500?' (first 500)':''}`:'';
+
+  $('#cvFoot').innerHTML=`✓ = advertised in that country\u2019s ad group · ✗ = <b>not advertised</b> (missing). Compared by ASIN against your product list. Uploading a new product list or a country\u2019s ad group replaces the old one.`;
+}
+
+function showEmpty(){$('#empty').style.display='block';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');$('#coverageDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
 
 /* ---------- shipment planner dashboard ---------- */
 let lastP=null;
@@ -1994,6 +2153,15 @@ function exportCSV(){
     downloadBlob((cur.label||'shipment').replace(/[^\w\-]+/g,'_')+'_plan.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
     return;
   }
+  if(DB.view==='coverage'){
+    const C=computeCoverage();
+    const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    const head=['ASIN','Product',...C.countries.map(c=>countryLabel(c)),'Missing in'];
+    const lines=[head.map(esc).join(',')];
+    C.rows.forEach(r=>lines.push([r.asin,r.name,...C.countries.map(c=>r.inC[c]?'Advertised':'MISSING'),r.missCount].map(esc).join(',')));
+    downloadBlob('ad-coverage-gaps.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+    return;
+  }
   if(DB.view==='ledger'){
     const L=buildLedger();
     const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
@@ -2025,7 +2193,7 @@ function exportCSV(){
   downloadBlob((cur.label||'period').replace(/[^\w\-]+/g,'_')+'_products.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
 }
 function backupAll(){
-  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.inventory||[]).length)return;
+  if(!DB.periods.length&&!(DB.returns||[]).length&&!(DB.ads||[]).length&&!(DB.inventory||[]).length&&!coverageActive())return;
   downloadBlob('sales-studio-backup-'+new Date().toISOString().slice(0,10)+'.json','application/json',JSON.stringify(DB));
 }
 async function restoreFrom(file){
@@ -2040,6 +2208,7 @@ async function restoreFrom(file){
     (obj.ads||[]).forEach(p=>{if(!aIds.has(p.id))DB.ads.push(p);});
     DB.inventory=DB.inventory||[];const iIds=new Set(DB.inventory.map(p=>p.id));
     (obj.inventory||[]).forEach(p=>{if(!iIds.has(p.id))DB.inventory.push(p);});
+    if(obj.coverage&&!coverageActive()){DB.coverage=obj.coverage;}
     if(!DB.currentId&&DB.periods.length)DB.currentId=ordered()[ordered().length-1].id;
     if(!DB.currentReturnsId&&DB.returns.length)DB.currentReturnsId=orderedReturns()[orderedReturns().length-1].id;
     if(!DB.currentAdsId&&DB.ads.length)DB.currentAdsId=orderedAds()[orderedAds().length-1].id;
@@ -2062,8 +2231,16 @@ function openAddModal(type,rows,fileName,extra){
   $('#mLabel').value=smartLabel(fileName);
   // country field: prefill with active/last country; offer existing countries as suggestions
   const cs=countriesList().filter(Boolean);
-  $('#countryOptions').innerHTML=cs.map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');
-  $('#mCountry').value=(extra&&extra.is3pl)?(DB.lastCountry&&/3pl|third/i.test(DB.lastCountry)?DB.lastCountry:'3PL'):(DB.activeCountry||DB.lastCountry||'');
+  const isCoverage=(type==='productlist'||type==='adgroup');
+  const countryRow=$('#mCountryRow');if(countryRow)countryRow.style.display=(type==='productlist')?'none':'';
+  if(type==='adgroup'){
+    const sugg=['UK','France','Germany','Italy',...cs.filter(c=>!/^(uk|france|germany|italy)$/i.test(c))];
+    $('#countryOptions').innerHTML=[...new Set(sugg)].map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');
+    $('#mCountry').value=DB.lastCountry&&/^(uk|france|germany|italy)$/i.test(DB.lastCountry)?DB.lastCountry:'';
+  }else{
+    $('#countryOptions').innerHTML=cs.map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');
+    $('#mCountry').value=(extra&&extra.is3pl)?(DB.lastCountry&&/3pl|third/i.test(DB.lastCountry)?DB.lastCountry:'3PL'):(DB.activeCountry||DB.lastCountry||'');
+  }
   $('#mQueue').textContent=fileQueue.length?`${fileQueue.length} more file${fileQueue.length>1?'s':''} after this`:'';
   if(type==='returns'){
     const R=computeReturns(rows,curSalesRows());
@@ -2090,6 +2267,14 @@ function openAddModal(type,rows,fileName,extra){
       $('#mDesc').textContent='A label you\u2019ll recognise — today\u2019s date works well.';
       $('#mInfo').innerHTML=`Found <b>${num(I.items.length)}</b> products · <b>${num(I.totUnits)}</b> units on hand · <b>${I.out}</b> out of stock${I.unsellUnits?` · <b>${I.unsellUnits}</b> unsellable`:''}.`;
     }
+  }else if(type==='productlist'){
+    $('#mTitle').textContent='Name this product list';
+    $('#mDesc').textContent='This is the master list of ASINs in the category. Uploading a new one replaces it.';
+    $('#mInfo').innerHTML=`Found <b>${num(rows.length)}</b> products (ASINs) in this category.`;
+  }else if(type==='adgroup'){
+    $('#mTitle').textContent='Name this ad group';
+    $('#mDesc').textContent='Set the country (UK, France, Germany, Italy). One ad-group file per country.';
+    $('#mInfo').innerHTML=`Found <b>${num(rows.length)}</b> advertised ASINs in this ad group. Set its country below.`;
   }else{
     const M=compute(rows);
     $('#mTitle').textContent='Name this Sales period';
@@ -2132,6 +2317,12 @@ async function processNextFile(){
     }else if(type==='inventory'){
       const {rows,is3pl}=parseInventory(aoa);
       openAddModal('inventory',rows,file.name,{is3pl});
+    }else if(type==='adgroup'){
+      const {asins}=parseAdGroup(aoa);
+      openAddModal('adgroup',asins,file.name);
+    }else if(type==='productlist'){
+      const {asins}=parseProductList(aoa);
+      openAddModal('productlist',asins,file.name);
     }else if(type==='sales'){
       const {rows,hadSessions}=mapColumns(aoa);
       openAddModal('sales',rows,file.name,{hadSessions});
@@ -2147,9 +2338,14 @@ async function processNextFile(){
 function commitPending(){
   if(!pending)return;
   const label=($('#mLabel').value||'').trim()||smartLabel(pending.fileName);
+  const isCoverage=(pending.type==='productlist'||pending.type==='adgroup');
   let country=($('#mCountry').value||'').trim();
-  if(!country&&DB.activeCountry&&countryHasData(DB.activeCountry))country=DB.activeCountry;
-  DB.lastCountry=country;DB.activeCountry=country;
+  if(!isCoverage){
+    if(!country&&DB.activeCountry&&countryHasData(DB.activeCountry))country=DB.activeCountry;
+    DB.lastCountry=country;DB.activeCountry=country;
+  }else if(pending.type==='adgroup'){
+    DB.lastCountry=country;
+  }
   const id='p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const base={id,label,country,added:Date.now(),fileName:pending.fileName,rows:pending.rows};
   if(pending.type==='returns'){
@@ -2158,6 +2354,16 @@ function commitPending(){
     DB.ads=DB.ads||[];DB.ads.push(base);DB.currentAdsId=id;DB.view='ads';
   }else if(pending.type==='inventory'){
     DB.inventory=DB.inventory||[];DB.inventory.push(Object.assign(base,{is3pl:pending.extra&&pending.extra.is3pl}));DB.currentInvId=id;DB.view='inventory';
+  }else if(pending.type==='productlist'){
+    DB.coverage=DB.coverage||{product:null,groups:{}};
+    DB.coverage.product={asins:pending.rows,fileName:pending.fileName,added:Date.now(),label};
+    DB.view='coverage';
+  }else if(pending.type==='adgroup'){
+    DB.coverage=DB.coverage||{product:null,groups:{}};
+    const c=country||'Country';
+    DB.coverage.groups=DB.coverage.groups||{};
+    DB.coverage.groups[c]={asins:pending.rows,fileName:pending.fileName,added:Date.now(),label};
+    DB.view='coverage';
   }else{
     DB.periods.push(Object.assign(base,{hadSessions:pending.extra&&pending.extra.hadSessions}));DB.currentId=id;DB.view='sales';
   }
@@ -2221,6 +2427,12 @@ function wire(){
   };
   $('#invFilters').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;invFilter=b.dataset.f;renderInventory();};
   $('#lgSearch').oninput=e=>{ledgerSearch=e.target.value;renderLedger();};
+  $('#cvFilters').onclick=e=>{const b=e.target.closest('[data-cvf]');if(!b)return;coverageFilter=b.dataset.cvf;renderCoverage();};
+  $('#cvCards').onclick=e=>{
+    const rc=e.target.closest('[data-rmcountry]'),rp=e.target.closest('[data-rmproduct]');
+    if(rc){delete DB.coverage.groups[rc.dataset.rmcountry];coverageFilter='all';if(!coverageActive()){DB.view=presentViews()[0]||'sales';}render();dbSave(DB);}
+    else if(rp){if(confirm('Remove the product list? Country ad groups stay, but gaps can\u2019t be shown until you add a product list again.')){DB.coverage.product=null;if(!coverageActive()){DB.view=presentViews()[0]||'sales';}render();dbSave(DB);}}
+  };
   $('#barSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;barKey=b.dataset.k;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));if(lastM)drawBar(lastM);};
   $('#search').oninput=e=>{q=e.target.value.toLowerCase().trim();renderRows();};
   $('#filt').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderRows();};
@@ -2265,9 +2477,9 @@ function wire(){
 (async function(){
   wire();
   const loaded=await dbLoad();
-  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.inventory&&loaded.inventory.length))){
+  if(loaded&&((loaded.periods&&loaded.periods.length)||(loaded.returns&&loaded.returns.length)||(loaded.ads&&loaded.ads.length)||(loaded.inventory&&loaded.inventory.length)||(loaded.coverage&&(loaded.coverage.product||Object.keys(loaded.coverage.groups||{}).length)))){
     DB=loaded;
-    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.inventory=DB.inventory||[];DB.cartons=DB.cartons||{};DB.targetDays=DB.targetDays||70;DB.activeCountry=DB.activeCountry||'';DB.lastCountry=DB.lastCountry||'';
+    DB.periods=DB.periods||[];DB.returns=DB.returns||[];DB.ads=DB.ads||[];DB.inventory=DB.inventory||[];DB.coverage=DB.coverage||{product:null,groups:{}};DB.cartons=DB.cartons||{};DB.targetDays=DB.targetDays||70;DB.activeCountry=DB.activeCountry||'';DB.lastCountry=DB.lastCountry||'';
     if(!presentViews().length){const cs=countriesList();DB.activeCountry=cs.length?cs[0]:'';}
     if(!DB.view||!presentViews().includes(DB.view))DB.view=presentViews()[0]||'sales';
     {const sv=ordered();if(!sv.find(p=>p.id===DB.currentId))DB.currentId=sv.length?sv[sv.length-1].id:null;}
