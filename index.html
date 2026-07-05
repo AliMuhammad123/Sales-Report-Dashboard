@@ -24,7 +24,9 @@
   /* top bar */
   .topbar{position:sticky;top:0;z-index:40;background:rgba(239,234,224,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--vein)}
   .topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+  .brand{display:flex;align-items:center;gap:11px;margin-right:auto;cursor:pointer;border-radius:10px;padding:4px 10px 4px 6px;margin-left:-6px;transition:background .15s}
+  .brand:hover{background:var(--surface-2)}
+  .brand:focus-visible{outline:2px solid var(--onyx);outline-offset:2px}
   .glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--onyx-deep),var(--onyx));position:relative;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
   .glyph::after{content:"";position:absolute;inset:6px 7px;border-left:2px solid var(--ochre-soft);border-radius:1px;transform:rotate(18deg);opacity:.9}
   .brand .bt{font-family:'Fraunces',serif;font-weight:600;font-size:17px;letter-spacing:-.01em;line-height:1}
@@ -302,7 +304,7 @@
 </style>
 
 <div class="topbar"><div class="topbar-in">
-  <div class="brand">
+  <div class="brand" id="brandHome" title="Go to the main page" role="button" tabindex="0">
     <div class="glyph"></div>
     <div><div class="bt">Sales Studio</div><div class="bs">marble · onyx · stone</div></div>
   </div>
@@ -2450,6 +2452,9 @@ function wire(){
   };
   $('#invFilters').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;invFilter=b.dataset.f;renderInventory();};
   $('#lgSearch').oninput=e=>{ledgerSearch=e.target.value;renderLedger();};
+  const goHome=()=>{const pv=presentViews();DB.view=pv[0]||'sales';render();dbSave(DB);};
+  $('#brandHome').onclick=goHome;
+  $('#brandHome').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goHome();}};
   $('#cvFilters').onclick=e=>{const b=e.target.closest('[data-cvf]');if(!b)return;coverageFilter=b.dataset.cvf;renderCoverage();};
   $('#cvCards').onclick=e=>{
     const rc=e.target.closest('[data-rmcountry]'),rp=e.target.closest('[data-rmproduct]');
