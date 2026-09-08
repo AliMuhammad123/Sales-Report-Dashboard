@@ -816,6 +816,56 @@
     font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600}
   .rtabs button.on .rt-n{background:var(--info-bg);color:var(--onyx)}
 
+
+  /* ---- reimbursements ---- */
+  .rb-hero{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:12px}
+  @media(max-width:860px){.rb-hero{grid-template-columns:1fr}}
+  .rb-main{background:var(--surface);border:1px solid var(--vein);border-left:4px solid var(--good);
+    border-radius:15px;padding:20px 22px;box-shadow:var(--shadow)}
+  .rb-k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .rb-v{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:600;color:var(--good);
+    letter-spacing:-.035em;line-height:1.05;margin:6px 0 4px}
+  .rb-s{font-size:13px;color:var(--ink-soft)}
+  .rb-side{display:flex;flex-direction:column;gap:9px}
+  .rb-pill{background:var(--surface);border:1px solid var(--vein);border-radius:12px;
+    padding:11px 14px;display:flex;align-items:baseline;gap:11px}
+  .rb-pill b{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;flex:none}
+  .rb-pill span{font-size:12px;color:var(--ink-soft);line-height:1.35}
+  .rb-pill.urgent{border-left:3px solid var(--warn)} .rb-pill.urgent b{color:var(--warn)}
+  .rb-pill.expired{border-left:3px solid var(--crit)} .rb-pill.expired b{color:var(--crit)}
+  .rb-pill.basis{border-left:3px solid var(--info)} .rb-pill.basis b{color:var(--info)}
+  .rb-policy{background:var(--surface-2);border-radius:11px;padding:13px 15px;font-size:12.5px;
+    color:var(--ink-soft);line-height:1.6;margin-bottom:16px}
+  .rb-policy b{color:var(--ink)} .rb-policy em{font-style:normal;font-weight:600;color:var(--ink)}
+  .rb-filters{margin-bottom:16px}
+  .fsel{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink-faint)}
+  .fsel select{border:1px solid var(--vein);border-radius:8px;padding:7px 9px;background:var(--surface);
+    font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink);font-weight:500;max-width:150px}
+  .rb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:900px){.rb-grid{grid-template-columns:1fr}}
+  .rb-card{background:var(--surface);border:1px solid var(--vein);border-radius:14px;
+    padding:15px 17px;box-shadow:var(--shadow)}
+  .rb-card h4{margin:0 0 12px;font-size:13.5px;font-weight:700;letter-spacing:-.01em}
+  .rbrow{display:grid;grid-template-columns:1fr 68px;grid-template-areas:"l v" "rail q";
+    gap:3px 10px;margin-bottom:11px;align-items:center}
+  .rbrow-l{grid-area:l;font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rbrow-v{grid-area:v;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right}
+  .rbrow-rail{grid-area:rail;height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+  .rbrow-rail i{display:block;height:100%;background:linear-gradient(90deg,var(--good),#5FC79B);border-radius:99px}
+  .rbrow-q{grid-area:q;font-size:10.5px;color:var(--ink-faint);text-align:right}
+  .rb-count{font-size:12.5px;color:var(--ink-faint);margin-bottom:9px}
+  .rb-row{cursor:pointer} .rb-row:hover td{background:var(--surface-2)}
+  .rb-x{color:var(--ink-faint);text-align:right;font-size:16px}
+  .rb-detail td{background:var(--surface-2)!important;padding:0!important}
+  .rbdet{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:18px 20px}
+  @media(max-width:900px){.rbdet{grid-template-columns:1fr}}
+  .rbdet h5{margin:0 0 9px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+  .rbdet-note{margin-top:9px;font-size:11.5px;color:var(--ink-faint);line-height:1.45}
+  .rbdet-act{margin-top:12px;background:var(--surface);border-radius:9px;padding:11px 13px;
+    font-size:12.5px;line-height:1.55;color:var(--ink-soft)}
+  .rbdet-act b{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:4px}
+
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -1219,6 +1269,19 @@
     </div>
     <input class="lg-search" id="prodSearch" placeholder="Search product or ASIN\u2026">
     <div id="prodBody"></div>
+  </section>
+
+
+  <!-- ============ REIMBURSEMENTS ============ -->
+  <section class="dash" id="reimbDash">
+    <div class="page-head">
+      <h2 class="tHead">Reimbursements</h2>
+      <p class="page-sub">Stock Amazon or the carrier damaged, lost or failed to deliver &mdash; and what you can still claim back for it. Filter by region, period, cause or deadline, and open any product for the full breakdown.</p>
+    </div>
+    <div id="rbHero"></div>
+    <div class="tbar rb-filters" id="rbFilters"></div>
+    <div id="rbBreak"></div>
+    <div id="rbBody"></div>
   </section>
 
   <!-- ============ ASK ============ -->
@@ -1950,7 +2013,7 @@ function wireCopy(){
       return;
     }
     const ex=e.target.closest('[data-exp20]');
-    if(ex){exportTop20();return;}
+    if(ex){exportTop20().catch(err=>{console.warn('export failed:',err);toast('Export failed');});return;}
   });
 }
 
@@ -2151,7 +2214,7 @@ async function exportTop20(){
   const approx=tr.some(t=>t.approx);
   const done=tr.filter(t=>t.english).length;
 
-  const head=['Rank','ASIN','Product','Product in English','Language','Returns','Units Sold',
+  const head=['Rank','ASIN','Product (original)','Product (English)','Language','Returns','Units Sold',
     'Return Rate %','Value','Main Reason','Cause','Owner','Recommended Fix'];
   const lines=[head.map(esc).join(',')];
   LAST_TOP20.forEach((p,i)=>{
@@ -2160,7 +2223,7 @@ async function exportTop20(){
     const t=tr[i]||{lang:'en',english:'',approx:false};
     lines.push([
       i+1,p.asin||'',p.name||'',
-      t.english?(t.approx?t.english+' (approx)':t.english):'',
+      englishCell(p.name,t),
       (t.lang||'en').toUpperCase(),
       p.qty,
       p.units==null?'':p.units,
@@ -2737,7 +2800,7 @@ function refreshViewSwitch(){
   }else{rw.style.display='none';rm.innerHTML='<div class="rep-empty">No reports loaded yet.</div>';}
 }
 
-const DEC_SECTION={today:'todayDash',actions:'actionsDash',leaks:'leaksDash',growth:'growthDash',iq:'iqDash',products:'productsDash',ask:'askDash'};
+const DEC_SECTION={today:'todayDash',actions:'actionsDash',leaks:'leaksDash',growth:'growthDash',iq:'iqDash',products:'productsDash',reimb:'reimbDash',ask:'askDash'};
 function render(){
   const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length||coverageActive()||!!DATASET;
   if(!anyData){showEmpty();return;}
@@ -3559,20 +3622,39 @@ let lastP=null;
 
 
 
+
+/* The English column always carries a usable value: the translation when the
+   title is foreign, the original when it is already English. */
+function englishCell(name,t){
+  if(!name)return '';
+  if(!t||!t.english)return name;              // already English, or nothing better to offer
+  return t.approx?t.english+' (approx)':t.english;
+}
 function downloadBlob(name,type,content){
   const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},800);
 }
-function exportCSV(){
+async function exportCSV(){
   if(DB.view==='returns'){
     const cur=(DB.returns||[]).find(p=>p.id===DB.currentReturnsId);if(!cur)return;
     const R=computeReturns(cur.rows,curSalesRows());
     const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-    const head=['ASIN','Product','Returns','Units Sold','Return Rate %','Top Reason'];
+    const rows=[...R.products].sort((a,b)=>(b.rate??-1)-(a.rate??-1));
+    // native name and English side by side
+    let tr=[];
+    try{ tr=await translateNames(rows.map(p=>p.name||'')); }
+    catch(e){ console.warn('translation skipped:',e); tr=rows.map(()=>({lang:'en',english:'',approx:false})); }
+    const head=['ASIN','Product (original)','Product (English)','Language','Returns','Units Sold','Return Rate %','Top Reason'];
     const lines=[head.map(esc).join(',')];
-    [...R.products].sort((a,b)=>(b.rate??-1)-(a.rate??-1)).forEach(p=>lines.push([p.asin,p.name,p.qty,p.units==null?'':p.units,p.rate==null?'':p.rate.toFixed(1),p.topReason].map(esc).join(',')));
+    rows.forEach((p,i)=>{
+      const t=tr[i]||{lang:'en',english:'',approx:false};
+      lines.push([p.asin,p.name,englishCell(p.name,t),(t.lang||'en').toUpperCase(),
+        p.qty,p.units==null?'':p.units,p.rate==null?'':p.rate.toFixed(1),p.topReason].map(esc).join(','));
+    });
     downloadBlob((cur.label||'returns').replace(/[^\w\-]+/g,'_')+'_returns.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+    const n=tr.filter(t=>t.english).length;
+    toast(n?'Exported \u00B7 '+n+' translated':'Exported');
     return;
   }
   if(DB.view==='ads'){
@@ -3945,7 +4027,7 @@ function wire(){
   const em=$('#exportMenu');
   $('#exportBtn').onclick=e=>{e.stopPropagation();em.classList.toggle('on');};
   em.onclick=e=>{const b=e.target.closest('button');if(!b)return;em.classList.remove('on');
-    if(b.dataset.x==='pdf')window.print();else if(b.dataset.x==='csv')exportCSV();};
+    if(b.dataset.x==='pdf')window.print();else if(b.dataset.x==='csv')exportCSV().catch(e=>{console.warn('export failed:',e);toast('Export failed');});};
   document.addEventListener('click',e=>{if(!e.target.closest('#exportWrap'))em.classList.remove('on');});
 
   $('#mSave').onclick=commitPending;
@@ -3955,6 +4037,7 @@ function wire(){
 
   wireDecision();
   wireCopy();
+  wireReimb();
   wireToday();
   wireReturnTabs();
   $('#manageBtn').onclick=openManage;
@@ -5313,6 +5396,7 @@ const DECISION_VIEWS={
   growth:{label:'Growth',icon:'\u25B2'},
   iq:{label:'Inventory IQ',icon:'\u25A6'},
   products:{label:'Products',icon:'\u2317'},
+  reimb:{label:'Reimbursements',icon:'\u21BA'},
   ask:{label:'Ask',icon:'?'}
 };
 const DECISION_KEYS=Object.keys(DECISION_VIEWS);
@@ -5325,6 +5409,7 @@ function renderDecision(v){
   else if(v==='growth')renderGrowth();
   else if(v==='iq')renderInvIQ();
   else if(v==='products')renderProducts();
+  else if(v==='reimb')renderReimb();
   else if(v==='ask')renderAsk();
 }
 
@@ -5514,6 +5599,353 @@ function wireToday(){
     if(e.target.closest('[data-sku]'))return;      // let SKU chips do their own thing
     const row=t.closest('[data-srow]');
     if(row)row.classList.toggle('open');
+  });
+}
+
+
+/* ==========================================================================
+   REIMBURSEMENTS
+   What Amazon owes when it damages or loses your stock.
+
+   Since 31 March 2025 the basis depends on WHEN the loss happened:
+
+     · Damaged or lost BEFORE a customer ordered (storage, receiving)
+         -> reimbursed at MANUFACTURING COST, excluding shipping and duties.
+     · Damaged or lost AFTER a customer ordered — which includes picking,
+       packing, shipping and RETURNS PROCESSING
+         -> reimbursed at the SALE PRICE of that order, less the usual fees.
+
+   A warehouse-damaged unit in a returns report was damaged while the return
+   was being processed, so it falls in the second, more favourable bucket.
+   Getting that distinction right is the difference between a realistic
+   estimate and one that is wildly wrong in either direction.
+   ========================================================================== */
+
+const REIMB_DEFAULTS={
+  referralPct:15,     // typical Amazon referral fee withheld from a sale-price claim
+  fbaFeePct:12,       // rough stand-in for the fulfilment fee element
+  claimWindowDays:60  // most FBA claim types must be filed within 60 days
+};
+function reimbCfg(){
+  const st=S();
+  return {
+    referralPct:st.referralPct==null?REIMB_DEFAULTS.referralPct:st.referralPct,
+    fbaFeePct:st.fbaFeePct==null?REIMB_DEFAULTS.fbaFeePct:st.fbaFeePct,
+    claimWindowDays:st.claimWindowDays==null?REIMB_DEFAULTS.claimWindowDays:st.claimWindowDays
+  };
+}
+
+/* which reason codes are Amazon's fault, and on which basis they are paid */
+const REIMB_REASONS={
+  'Damaged in warehouse':{basis:'sale',blame:'amazon',
+    note:'Damaged by the fulfilment centre while handling the return.'},
+  'Damaged in transit':{basis:'sale',blame:'carrier',
+    note:'Damaged by the carrier after the order was placed.'},
+  'Never arrived':{basis:'sale',blame:'carrier',
+    note:'Never delivered — claimable against the carrier or Amazon.'},
+  'Undeliverable':{basis:'sale',blame:'carrier',
+    note:'Could not be delivered and may not have come back to stock.'}
+};
+const REIMB_KEYS=Object.keys(REIMB_REASONS);
+
+/* one claim line per product per reason per month per marketplace */
+function buildReimbursements(){
+  const cfg=reimbCfg(), st=S();
+  const salesByAsin={};
+  (DB.periods||[]).forEach(p=>p.rows.forEach(r=>{
+    if(!r.asin)return;
+    const cur=salesByAsin[r.asin];
+    if(!cur)salesByAsin[r.asin]={units:0,sales:0};
+    salesByAsin[r.asin].units+=r.units||0;
+    salesByAsin[r.asin].sales+=r.sales||0;
+  }));
+  const costOf=(asin,price)=>{
+    const entered=(DB.costs||{})[asin];
+    if(entered!=null&&entered>=0)return {v:+entered,known:true};
+    if(price>0)return {v:price*(1-(st.defaultMarginPct/100)),known:false};
+    return {v:0,known:false};
+  };
+
+  const lines=[];
+  const now=Date.now();
+  (DB.returns||[]).forEach(rep=>{
+    const region=rep.country||'\u2014';
+    rep.rows.forEach(r=>{
+      const label=reasonLabel(r.reason);
+      const rule=REIMB_REASONS[label];
+      if(!rule)return;                       // not an Amazon-caused loss
+      const asin=r.asin||'';
+      const s=salesByAsin[asin];
+      const price=s&&s.units?s.sales/s.units:0;
+      const c=costOf(asin,price);
+      const qty=r.qty||1;
+
+      // the two bases, per Amazon's post-2025 policy
+      const feePct=(cfg.referralPct+cfg.fbaFeePct)/100;
+      const perUnit=rule.basis==='sale' ? Math.max(0,price*(1-feePct)) : c.v;
+      const mk=monthKey(r.date);
+      const age=(()=>{
+        if(!r.date)return null;
+        const t=new Date(String(r.date).slice(0,10));
+        return isNaN(t)?null:Math.floor((now-t.getTime())/864e5);
+      })();
+      lines.push({
+        asin,name:r.name||asin,region,reason:label,basis:rule.basis,blame:rule.blame,
+        note:rule.note,qty,price,unitCost:c.v,costKnown:c.known,
+        perUnit,value:perUnit*qty,
+        month:mk,monthLabel:mk?monthLabel(mk):'\u2014',
+        ageDays:age,
+        expired:age!=null&&age>cfg.claimWindowDays,
+        dueDays:age==null?null:cfg.claimWindowDays-age,
+        dispo:r.dispo||''
+      });
+    });
+  });
+  return lines;
+}
+
+/* roll a filtered set of claim lines into something displayable */
+function reimbSummary(lines){
+  const sum=(a)=>a.reduce((x,l)=>x+l.value,0);
+  const qty=(a)=>a.reduce((x,l)=>x+l.qty,0);
+  const claimable=lines.filter(l=>!l.expired);
+  const expired=lines.filter(l=>l.expired);
+  const urgent=claimable.filter(l=>l.dueDays!=null&&l.dueDays<=14);
+
+  const group=(key,labelOf)=>{
+    const m={};
+    lines.forEach(l=>{
+      const k=l[key]==null?'\u2014':l[key];
+      if(!m[k])m[k]={key:k,label:labelOf?labelOf(l):k,qty:0,value:0,expired:0,expiredValue:0};
+      m[k].qty+=l.qty;m[k].value+=l.value;
+      if(l.expired){m[k].expired+=l.qty;m[k].expiredValue+=l.value;}
+    });
+    return Object.values(m);
+  };
+
+  const byProduct={};
+  lines.forEach(l=>{
+    const k=l.asin||l.name;
+    if(!byProduct[k])byProduct[k]={asin:l.asin,name:l.name,qty:0,value:0,expiredValue:0,
+      reasons:{},regions:{},months:{},costKnown:l.costKnown,price:l.price,unitCost:l.unitCost,lines:[]};
+    const b=byProduct[k];
+    b.qty+=l.qty;b.value+=l.value;
+    if(l.expired)b.expiredValue+=l.value;
+    b.reasons[l.reason]=(b.reasons[l.reason]||0)+l.qty;
+    b.regions[l.region]=(b.regions[l.region]||0)+l.qty;
+    if(l.month)b.months[l.monthLabel]=(b.months[l.monthLabel]||0)+l.qty;
+    b.lines.push(l);
+  });
+
+  return {
+    total:sum(lines),totalQty:qty(lines),
+    claimable:sum(claimable),claimableQty:qty(claimable),
+    expired:sum(expired),expiredQty:qty(expired),
+    urgent:sum(urgent),urgentQty:qty(urgent),
+    saleBasis:sum(lines.filter(l=>l.basis==='sale')),
+    costBasis:sum(lines.filter(l=>l.basis==='cost')),
+    regions:group('region').sort((a,b)=>b.value-a.value),
+    reasons:group('reason').sort((a,b)=>b.value-a.value),
+    months:group('monthLabel').sort((a,b)=>String(a.key)<String(b.key)?-1:1),
+    products:Object.values(byProduct).sort((a,b)=>b.value-a.value),
+    assumedCosts:lines.some(l=>!l.costKnown&&l.basis==='cost')
+  };
+}
+
+
+/* ---------- Reimbursements view ---------- */
+let rbFilter={q:'',region:'all',month:'all',reason:'all',status:'all'};
+let rbOpen=null, rbShown=25;
+
+function rbApply(lines){
+  const f=rbFilter, q=f.q.toLowerCase();
+  return lines.filter(l=>
+    (!q||((l.name||'')+' '+(l.asin||'')).toLowerCase().includes(q))&&
+    (f.region==='all'||l.region===f.region)&&
+    (f.month==='all'||l.monthLabel===f.month)&&
+    (f.reason==='all'||l.reason===f.reason)&&
+    (f.status==='all'||(f.status==='open'&&!l.expired)||(f.status==='urgent'&&!l.expired&&l.dueDays!=null&&l.dueDays<=14)||(f.status==='expired'&&l.expired))
+  );
+}
+
+function renderReimb(){
+  const all=buildReimbursements();
+  if(!all.length){
+    $('#rbBody').innerHTML=`<div class="none">No Amazon-caused losses found. This view reads your <b>returns</b> report for units damaged in the warehouse, damaged in transit, never delivered or undeliverable \u2014 the cases Amazon or the carrier owes you for. Load a returns report to populate it.</div>`;
+    $('#rbHero').innerHTML='';$('#rbFilters').innerHTML='';$('#rbBreak').innerHTML='';
+    return;
+  }
+  const S_=reimbSummary(all);
+  const cfg=reimbCfg();
+
+  // headline
+  $('#rbHero').innerHTML=`
+    <div class="rb-hero">
+      <div class="rb-main">
+        <div class="rb-k">Still claimable</div>
+        <div class="rb-v">${fUSD(S_.claimable)}</div>
+        <div class="rb-s">${num(S_.claimableQty)} units across ${S_.products.length} products</div>
+      </div>
+      <div class="rb-side">
+        ${S_.urgent>0?`<div class="rb-pill urgent"><b>${fUSD(S_.urgent)}</b><span>${num(S_.urgentQty)} units expiring within 14 days</span></div>`:''}
+        ${S_.expired>0?`<div class="rb-pill expired"><b>${fUSD(S_.expired)}</b><span>${num(S_.expiredQty)} units past the ${cfg.claimWindowDays}-day window \u2014 no longer claimable</span></div>`:''}
+        <div class="rb-pill basis"><b>${fUSD(S_.saleBasis)}</b><span>paid at sale price less fees</span></div>
+        ${S_.costBasis>0?`<div class="rb-pill basis"><b>${fUSD(S_.costBasis)}</b><span>paid at manufacturing cost</span></div>`:''}
+      </div>
+    </div>
+    <div class="rb-policy">
+      <b>How this is calculated.</b> Since 31 March 2025 Amazon pays on two different bases. Stock lost or damaged
+      <em>before</em> a customer ordered is reimbursed at your manufacturing cost. Anything lost or damaged
+      <em>after</em> an order \u2014 which includes returns processing \u2014 is reimbursed at that order's sale price less fees.
+      Everything here comes from your returns report, so it is the second, more favourable case: sale price minus an
+      assumed ${cfg.referralPct+cfg.fbaFeePct}% in fees.
+      These are estimates of what you can claim, not amounts Amazon has paid.
+      ${S_.assumedCosts?' Some lines fall back to an assumed unit cost \u2014 enter real costs for a firmer figure.':''}
+    </div>`;
+
+  // filters
+  const opts=(arr,cur,key)=>['all'].concat(arr).map(v=>
+    `<option value="${String(v).replace(/"/g,'&quot;')}"${cur===v?' selected':''}>${v==='all'?'All':v}</option>`).join('');
+  $('#rbFilters').innerHTML=`
+    <div class="tbar-l">
+      <span class="tbar-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+      <input class="tbar-in" id="rbQ" placeholder="Search product or ASIN\u2026" value="${rbFilter.q.replace(/"/g,'&quot;')}">
+    </div>
+    <label class="fsel">Region<select id="rbRegion">${opts(S_.regions.map(r=>r.key),rbFilter.region)}</select></label>
+    <label class="fsel">Period<select id="rbMonth">${opts(S_.months.map(m=>m.key),rbFilter.month)}</select></label>
+    <label class="fsel">Reason<select id="rbReason">${opts(S_.reasons.map(r=>r.key),rbFilter.reason)}</select></label>
+    <label class="fsel">Status<select id="rbStatus">
+      <option value="all"${rbFilter.status==='all'?' selected':''}>All</option>
+      <option value="open"${rbFilter.status==='open'?' selected':''}>Still claimable</option>
+      <option value="urgent"${rbFilter.status==='urgent'?' selected':''}>Expiring soon</option>
+      <option value="expired"${rbFilter.status==='expired'?' selected':''}>Expired</option>
+    </select></label>
+    <button class="btn tiny" id="rbReset">Reset</button>
+    <button class="btn tiny primary" id="rbExport">Export CSV</button>`;
+
+  // region + time breakdowns, on the filtered set
+  const F=rbApply(all);
+  const FS=reimbSummary(F);
+  const bar=(rows,max)=>rows.map(r=>`
+    <div class="rbrow">
+      <div class="rbrow-l">${r.label}</div>
+      <div class="rbrow-rail"><i style="width:${Math.max(3,r.value/Math.max(max,1)*100)}%"></i></div>
+      <div class="rbrow-v">${fUSD(r.value)}</div>
+      <div class="rbrow-q">${num(r.qty)} units</div>
+    </div>`).join('')||'<div class="none">Nothing matches these filters.</div>';
+  $('#rbBreak').innerHTML=`
+    <div class="rb-grid">
+      <div class="rb-card">
+        <h4>By region</h4>
+        ${bar(FS.regions,Math.max(...FS.regions.map(r=>r.value),1))}
+      </div>
+      <div class="rb-card">
+        <h4>By period</h4>
+        ${bar(FS.months,Math.max(...FS.months.map(r=>r.value),1))}
+      </div>
+      <div class="rb-card">
+        <h4>By cause</h4>
+        ${bar(FS.reasons,Math.max(...FS.reasons.map(r=>r.value),1))}
+      </div>
+    </div>`;
+
+  // product table with drill-down
+  const prods=FS.products;
+  const shown=prods.slice(0,rbShown);
+  $('#rbBody').innerHTML=`
+    <div class="rb-count">${shown.length} of ${prods.length} products \u00B7 ${fUSD(FS.claimable)} claimable under these filters</div>
+    <table class="tbl rb-tbl"><thead><tr>
+      <th>Product</th><th>Units</th><th>Per unit</th><th>Claimable</th><th>Basis</th><th>Deadline</th><th></th>
+    </tr></thead><tbody>${shown.map(p=>{
+      const soonest=p.lines.filter(l=>!l.expired&&l.dueDays!=null).sort((a,b)=>a.dueDays-b.dueDays)[0];
+      const allExpired=p.lines.every(l=>l.expired);
+      return `<tr class="rb-row" data-rb="${(p.asin||p.name).replace(/"/g,'')}">
+        <td><div class="pname">${short(p.name||p.asin,46)}</div><div class="pasin">${p.asin||''}</div></td>
+        <td class="mono">${num(p.qty)}</td>
+        <td class="mono">${fUSD(p.qty?p.value/p.qty:0)}</td>
+        <td class="mono"><b>${fUSD(p.value-p.expiredValue)}</b>${p.expiredValue>0?`<span class="sub2">${fUSD(p.expiredValue)} expired</span>`:''}</td>
+        <td><span class="tag ${p.lines[0].basis==='sale'?'st-good':'st-info'}">${p.lines[0].basis==='sale'?'Sale price':'Unit cost'}</span></td>
+        <td class="mono">${allExpired?'<span class="a-dead">expired</span>'
+          :soonest?(soonest.dueDays<=14?`<span class="a-crit">${soonest.dueDays}d left</span>`:`${soonest.dueDays}d left`):'\u2014'}</td>
+        <td class="rb-x">\u203A</td>
+      </tr>
+      ${rbOpen===(p.asin||p.name)?`<tr class="rb-detail"><td colspan="7">${reimbDetail(p,cfg)}</td></tr>`:''}`;
+    }).join('')}</tbody></table>
+    ${prods.length>rbShown?`<div class="tmore"><button class="btn ghost" id="rbMore">Show 25 more</button>
+      <button class="lnk" id="rbAll">Show all ${prods.length}</button></div>`:''}`;
+}
+
+function reimbDetail(p,cfg){
+  const rows=(o,unit)=>Object.entries(o).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>`<tr><td>${k}</td><td class="mono">${num(v)}${unit||''}</td></tr>`).join('');
+  const open=p.lines.filter(l=>!l.expired);
+  const expired=p.lines.filter(l=>l.expired);
+  const soonest=open.filter(l=>l.dueDays!=null).sort((a,b)=>a.dueDays-b.dueDays)[0];
+  return `<div class="rbdet">
+    <div class="rbdet-c">
+      <h5>Claim breakdown</h5>
+      <table class="ecotbl">
+        <tr><td>Units affected</td><td class="mono">${num(p.qty)}</td></tr>
+        <tr><td>Average sale price</td><td class="mono">${p.price?fUSD(p.price):'\u2014'}</td></tr>
+        <tr><td>Fees withheld (est.)</td><td class="mono">\u2212${cfg.referralPct+cfg.fbaFeePct}%</td></tr>
+        <tr><td>Estimated per unit</td><td class="mono">${fUSD(p.qty?p.value/p.qty:0)}</td></tr>
+        <tr class="eco-tot"><td>Still claimable</td><td class="mono">${fUSD(p.value-p.expiredValue)}</td></tr>
+        ${p.expiredValue>0?`<tr><td class="a-dead">Missed (window closed)</td><td class="mono a-dead">${fUSD(p.expiredValue)}</td></tr>`:''}
+      </table>
+      <div class="rbdet-note">${p.costKnown?'Using your entered unit cost.':'Unit cost is assumed \u2014 enter the real cost for a firmer figure.'}</div>
+    </div>
+    <div class="rbdet-c">
+      <h5>Where and when</h5>
+      <table class="ecotbl">${rows(p.regions,' units')}</table>
+      <h5 style="margin-top:12px">By month</h5>
+      <table class="ecotbl">${rows(p.months,' units')}</table>
+    </div>
+    <div class="rbdet-c">
+      <h5>Cause</h5>
+      <table class="ecotbl">${rows(p.reasons,' units')}</table>
+      <div class="rbdet-act">
+        <b>What to do</b>
+        ${open.length
+          ? `File a reimbursement claim in Seller Central for ${num(open.reduce((a,l)=>a+l.qty,0))} units${soonest?`, soonest deadline in ${soonest.dueDays} days`:''}. Attach the returns report and your supplier invoice \u2014 documentation requirements tightened in 2025 and claims without it are routinely rejected.`
+          : 'Every line for this product is past the claim window. Nothing to file.'}
+      </div>
+    </div>
+  </div>`;
+}
+
+function exportReimb(){
+  const all=buildReimbursements();
+  const F=rbApply(all);
+  if(!F.length){toast('Nothing to export');return;}
+  const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const head=['ASIN','Product','Region','Month','Reason','Basis','Units','Sale Price','Per Unit',
+    'Claimable','Age (days)','Days Left','Status'];
+  const lines=[head.map(esc).join(',')];
+  F.forEach(l=>lines.push([l.asin,l.name,l.region,l.monthLabel,l.reason,
+    l.basis==='sale'?'Sale price less fees':'Manufacturing cost',
+    l.qty,l.price?l.price.toFixed(2):'',l.perUnit.toFixed(2),l.value.toFixed(2),
+    l.ageDays==null?'':l.ageDays,l.dueDays==null?'':l.dueDays,
+    l.expired?'Expired':(l.dueDays!=null&&l.dueDays<=14?'Expiring soon':'Claimable')].map(esc).join(',')));
+  downloadBlob('reimbursement_claims.csv','text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
+  toast('Exported '+F.length+' claim lines');
+}
+
+function wireReimb(){
+  document.addEventListener('click',e=>{
+    if(e.target.closest('#rbReset')){rbFilter={q:'',region:'all',month:'all',reason:'all',status:'all'};rbShown=25;renderReimb();return;}
+    if(e.target.closest('#rbExport')){exportReimb();return;}
+    if(e.target.closest('#rbMore')){rbShown+=25;renderReimb();return;}
+    if(e.target.closest('#rbAll')){rbShown=1e9;renderReimb();return;}
+    const row=e.target.closest('.rb-row');
+    if(row){const k=row.dataset.rb;rbOpen=rbOpen===k?null:k;renderReimb();return;}
+  });
+  document.addEventListener('input',e=>{
+    if(e.target.id==='rbQ'){rbFilter.q=e.target.value;rbShown=25;renderReimb();
+      const el=document.getElementById('rbQ');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}}
+  });
+  document.addEventListener('change',e=>{
+    const m={rbRegion:'region',rbMonth:'month',rbReason:'reason',rbStatus:'status'};
+    if(m[e.target.id]){rbFilter[m[e.target.id]]=e.target.value;rbShown=25;renderReimb();}
   });
 }
 
