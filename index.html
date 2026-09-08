@@ -1954,16 +1954,215 @@ function wireCopy(){
   });
 }
 
-function exportTop20(){
+
+/* ==========================================================================
+   TRANSLATION
+   Product titles on EU marketplaces come back in the local language. This
+   turns them into English for the export.
+
+   Two routes, in order of quality:
+     1. The browser's on-device Translator API (Chrome 138+/Edge 148+ desktop).
+        Real translation, runs locally, no API key, nothing leaves the machine.
+     2. A built-in glossary of ecommerce vocabulary. Rough, word-level, and
+        clearly marked as approximate — but it works in every browser offline.
+   ========================================================================== */
+
+/* --- language fingerprints: stopwords + characters that give a language away --- */
+const LANG_SIGNS={
+  fr:{words:['de','le','la','les','des','du','pour','avec','en','et','sur','sans','noir','blanc','grand','petit','pièces','ensemble','lot'],chars:/[àâçéèêëîïôûùüœ]/i},
+  de:{words:['der','die','das','und','mit','für','aus','von','schwarz','weiß','gross','groß','klein','stück','set','tisch'],chars:/[äöüß]/i},
+  es:{words:['de','el','la','los','las','para','con','y','en','sin','negro','blanco','grande','pequeño','piezas','juego'],chars:/[áéíóúñ¿¡]/i},
+  it:{words:['di','il','la','le','per','con','e','in','senza','nero','bianco','grande','piccolo','pezzi','set'],chars:/[àèéìòù]/i},
+  nl:{words:['het','een','met','voor','van','zwart','wit','groot','klein','stuks','onderzetters'],chars:null},
+  pl:{words:['dla','z','i','na','do','czarny','biały','duży','mały','zestaw','sztuk'],chars:/[ąćęłńóśźż]/i},
+  sv:{words:['och','med','för','av','svart','vit','stor','liten','set','st'],chars:/[åäö]/i},
+  tr:{words:['ve','ile','için','siyah','beyaz','büyük','küçük','takım','adet'],chars:/[çğıöşü]/i}
+};
+
+/* --- offline fallback vocabulary, weighted to homeware / general ecommerce --- */
+const GLOSSARY={
+  fr:{noir:'black',blanc:'white',gris:'grey',rouge:'red',bleu:'blue',vert:'green',dore:'gold',doré:'gold',argent:'silver',
+    marbre:'marble',pierre:'stone',bois:'wood',verre:'glass',acier:'steel',cuir:'leather',tissu:'fabric',
+    grand:'large',grande:'large',petit:'small',petite:'small',moyen:'medium',
+    ensemble:'set',lot:'set',jeu:'set',pièces:'pieces',pieces:'pieces',paire:'pair',
+    table:'table',chaise:'chair',lampe:'lamp',plateau:'tray',bol:'bowl',assiette:'plate',tasse:'cup',
+    vase:'vase',boîte:'box',boite:'box',coussin:'cushion',tapis:'rug',miroir:'mirror',bougie:'candle',
+    cuisine:'kitchen',salon:'living room',chambre:'bedroom',bureau:'desk',jardin:'garden',
+    sous:'coaster',dessous:'coaster',verre_:'glass',pour:'for',avec:'with',sans:'without',de:'of',et:'and'},
+  de:{schwarz:'black',weiß:'white',weiss:'white',grau:'grey',rot:'red',blau:'blue',grün:'green',gold:'gold',silber:'silver',
+    marmor:'marble',stein:'stone',holz:'wood',glas:'glass',stahl:'steel',leder:'leather',stoff:'fabric',
+    groß:'large',gross:'large',klein:'small',mittel:'medium',
+    set:'set',stück:'pieces',stueck:'pieces',paar:'pair',
+    tisch:'table',stuhl:'chair',lampe:'lamp',tablett:'tray',schale:'bowl',teller:'plate',tasse:'cup',
+    vase:'vase',box:'box',kissen:'cushion',teppich:'rug',spiegel:'mirror',kerze:'candle',
+    küche:'kitchen',wohnzimmer:'living room',schlafzimmer:'bedroom',schreibtisch:'desk',garten:'garden',
+    untersetzer:'coaster',für:'for',mit:'with',ohne:'without',und:'and'},
+  es:{negro:'black',blanco:'white',gris:'grey',rojo:'red',azul:'blue',verde:'green',dorado:'gold',plata:'silver',
+    mármol:'marble',marmol:'marble',piedra:'stone',madera:'wood',vidrio:'glass',acero:'steel',cuero:'leather',tela:'fabric',
+    grande:'large',pequeño:'small',pequeno:'small',mediano:'medium',
+    juego:'set',conjunto:'set',piezas:'pieces',par:'pair',
+    mesa:'table',silla:'chair',lámpara:'lamp',lampara:'lamp',bandeja:'tray',cuenco:'bowl',plato:'plate',taza:'cup',
+    jarrón:'vase',jarron:'vase',caja:'box',cojín:'cushion',alfombra:'rug',espejo:'mirror',vela:'candle',
+    cocina:'kitchen',salón:'living room',dormitorio:'bedroom',escritorio:'desk',jardín:'garden',
+    posavasos:'coaster',para:'for',con:'with',sin:'without',de:'of',y:'and'},
+  it:{nero:'black',bianco:'white',grigio:'grey',rosso:'red',blu:'blue',verde:'green',oro:'gold',argento:'silver',
+    marmo:'marble',pietra:'stone',legno:'wood',vetro:'glass',acciaio:'steel',pelle:'leather',tessuto:'fabric',
+    grande:'large',piccolo:'small',medio:'medium',
+    set:'set',pezzi:'pieces',paio:'pair',
+    tavolo:'table',sedia:'chair',lampada:'lamp',vassoio:'tray',ciotola:'bowl',piatto:'plate',tazza:'cup',
+    vaso:'vase',scatola:'box',cuscino:'cushion',tappeto:'rug',specchio:'mirror',candela:'candle',
+    cucina:'kitchen',soggiorno:'living room',camera:'bedroom',scrivania:'desk',giardino:'garden',
+    sottobicchiere:'coaster',per:'for',con:'with',senza:'without',di:'of',e:'and'},
+  nl:{zwart:'black',wit:'white',grijs:'grey',rood:'red',blauw:'blue',groen:'green',goud:'gold',zilver:'silver',
+    marmer:'marble',steen:'stone',hout:'wood',glas:'glass',staal:'steel',leer:'leather',stof:'fabric',
+    groot:'large',klein:'small',
+    set:'set',stuks:'pieces',paar:'pair',
+    tafel:'table',stoel:'chair',lamp:'lamp',dienblad:'tray',kom:'bowl',bord:'plate',kop:'cup',
+    vaas:'vase',doos:'box',kussen:'cushion',tapijt:'rug',spiegel:'mirror',kaars:'candle',
+    keuken:'kitchen',woonkamer:'living room',slaapkamer:'bedroom',bureau:'desk',tuin:'garden',
+    onderzetter:'coaster',voor:'for',met:'with',zonder:'without',en:'and'}
+};
+
+/* words that read the same in English carry no evidence about language */
+const AMBIGUOUS=new Set(['set','lamp','vase','box','gold','blue','premium','base','mini','maxi',
+  'design','modern','vintage','luxe','classic','style','color','sofa','decor','marble']);
+
+/* strip common plural / adjectival endings so "marmo"->"marmo", "marmi"->"marmo" style
+   lookups land on the singular key that the glossary actually holds */
+function glossaryLookup(g,word){
+  if(!g||!word)return null;
+  if(g[word])return g[word];
+  const cuts=['es','en','er','em','s','i','e'];
+  for(const c of cuts){
+    if(word.length>c.length+2&&word.endsWith(c)){
+      const stem=word.slice(0,-c.length);
+      if(g[stem])return g[stem];
+      if(g[stem+'e'])return g[stem+'e'];
+    }
+  }
+  return null;
+}
+
+function detectLangHeuristic(text){
+  const t=String(text||'').toLowerCase();
+  if(!t.trim())return 'en';
+  const words=t.split(/[^a-zà-ÿąćęłńóśźżğışĳ]+/i).filter(w=>w.length>1&&!AMBIGUOUS.has(w));
+  if(!words.length)return 'en';
+  let best='en',bestScore=0;
+  Object.keys(LANG_SIGNS).forEach(lang=>{
+    const sig=LANG_SIGNS[lang];
+    let score=words.filter(w=>sig.words.includes(w)).length;
+    if(sig.chars&&sig.chars.test(t))score+=2;
+    const g=GLOSSARY[lang];
+    if(g)score+=words.filter(w=>glossaryLookup(g,w)).length*0.4;
+    if(score>bestScore){bestScore=score;best=lang;}
+  });
+  // only call it non-English on real evidence
+  return bestScore>=2?best:'en';
+}
+
+function glossaryTranslate(text,lang){
+  const g=GLOSSARY[lang];
+  if(!g)return '';
+  let hits=0;
+  const out=String(text).split(/(\s+|[,.;:()\-\/])/).map(tok=>{
+    if(!/[a-zà-ÿ]/i.test(tok))return tok;
+    const k=tok.toLowerCase().replace(/[^a-zà-ÿąćęłńóśźż]/gi,'');
+    const en=glossaryLookup(g,k);
+    if(en){hits++;return /^[A-Z]/.test(tok)?en.charAt(0).toUpperCase()+en.slice(1):en;}
+    return tok;
+  }).join('');
+  return hits>0?out:'';
+}
+
+/* --- on-device translator, one instance per source language --- */
+const _translators={};
+async function getTranslator(src){
+  if(src==='en')return null;
+  if(_translators[src]!==undefined)return _translators[src];
+  try{
+    if(!('Translator' in self)){_translators[src]=null;return null;}
+    const opts={sourceLanguage:src,targetLanguage:'en'};
+    const avail=await Translator.availability(opts);
+    if(avail==='unavailable'){_translators[src]=null;return null;}
+    if(avail==='downloadable')toast('Downloading '+src.toUpperCase()+' language pack\u2026');
+    const t=await Translator.create(Object.assign({},opts,{
+      monitor(m){m.addEventListener('downloadprogress',e=>{
+        if(e.total)toast('Language pack '+Math.round(e.loaded/e.total*100)+'%');
+      });}
+    }));
+    if(t.ready)await t.ready;
+    _translators[src]=t;
+    return t;
+  }catch(e){
+    console.warn('translator unavailable for',src,e);
+    _translators[src]=null;
+    return null;
+  }
+}
+
+/* returns [{lang, english, approx}] aligned with the input names */
+async function translateNames(names){
+  const out=names.map(n=>({lang:detectLangHeuristic(n),english:'',approx:false}));
+
+  // better detection when the browser offers it
+  try{
+    if('LanguageDetector' in self){
+      const det=await LanguageDetector.create();
+      for(let i=0;i<names.length;i++){
+        if(!names[i])continue;
+        try{
+          const r=await det.detect(names[i]);
+          if(r&&r[0]&&r[0].confidence>0.5)out[i].lang=r[0].detectedLanguage;
+        }catch(e){}
+      }
+      if(det.destroy)det.destroy();
+    }
+  }catch(e){}
+
+  const langs=[...new Set(out.map(o=>o.lang))].filter(l=>l&&l!=='en');
+  for(const lang of langs){
+    const tr=await getTranslator(lang);
+    for(let i=0;i<names.length;i++){
+      if(out[i].lang!==lang||!names[i])continue;
+      if(tr){
+        try{out[i].english=await tr.translate(names[i]);continue;}catch(e){}
+      }
+      const g=glossaryTranslate(names[i],lang);
+      if(g){out[i].english=g;out[i].approx=true;}
+    }
+  }
+  return out;
+}
+
+async function exportTop20(){
   if(!LAST_TOP20.length){toast('Nothing to export');return;}
   const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-  const head=['Rank','ASIN','Product','Returns','Units Sold','Return Rate %','Value','Main Reason','Cause','Owner','Recommended Fix'];
+
+  // Translate first. The click that triggered this export is the user gesture
+  // Chrome requires before it will download a language pack.
+  let tr=[];
+  try{
+    tr=await translateNames(LAST_TOP20.map(p=>p.name||''));
+  }catch(e){
+    console.warn('translation skipped:',e);
+    tr=LAST_TOP20.map(()=>({lang:'en',english:'',approx:false}));
+  }
+  const approx=tr.some(t=>t.approx);
+  const done=tr.filter(t=>t.english).length;
+
+  const head=['Rank','ASIN','Product','Product in English','Language','Returns','Units Sold',
+    'Return Rate %','Value','Main Reason','Cause','Owner','Recommended Fix'];
   const lines=[head.map(esc).join(',')];
   LAST_TOP20.forEach((p,i)=>{
     const f=fixFor(p.topReason);
     const g=CAUSE_GROUP[f.cause];
+    const t=tr[i]||{lang:'en',english:'',approx:false};
     lines.push([
-      i+1,p.asin||'',p.name||'',p.qty,
+      i+1,p.asin||'',p.name||'',
+      t.english?(t.approx?t.english+' (approx)':t.english):'',
+      (t.lang||'en').toUpperCase(),
+      p.qty,
       p.units==null?'':p.units,
       p.rate==null?'':p.rate.toFixed(1),
       p.price?(p.qty*p.price).toFixed(2):'',
@@ -1972,7 +2171,8 @@ function exportTop20(){
   });
   const name=String(LAST_RET_LABEL||'returns').replace(/[^\w\-]+/g,'_')+'_top20_returns.csv';
   downloadBlob(name,'text/csv;charset=utf-8','\ufeff'+lines.join('\r\n'));
-  toast('Exported '+LAST_TOP20.length+' products');
+  toast(done ? 'Exported '+LAST_TOP20.length+' products \u00B7 '+done+' translated'+(approx?' (approx)':'')
+             : 'Exported '+LAST_TOP20.length+' products');
 }
 
 /* ---------- ADS ---------- */
