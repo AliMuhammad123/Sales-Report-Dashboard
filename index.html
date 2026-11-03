@@ -983,6 +983,62 @@
   .cmp-note b{color:var(--ink)}
   .cmp-foot{margin-top:10px;font-size:11.5px;color:var(--ink-faint);line-height:1.5}
 
+
+  /* ---- sales vs returns + guide ---- */
+  .svr-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:6px 0 12px}
+  .svr-k{background:var(--surface);border:1px solid var(--vein);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .svr-k span{font-size:11.5px;color:var(--ink-soft);font-weight:600}
+  .svr-k b{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--ink)}
+  .svr-k b.neg{color:var(--crit)}
+  .svr-k em{font-style:normal;font-size:11px;color:var(--ink-faint)}
+  .svr-k.main b{font-size:26px}
+  .svr-k.k-good{background:var(--good-bg)}.svr-k.k-good b{color:var(--good)}
+  .svr-k.k-warn{background:var(--warn-bg)}.svr-k.k-warn b{color:var(--warn)}
+  .svr-k.k-crit{background:var(--crit-bg)}.svr-k.k-crit b{color:var(--crit)}
+  .svr-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+  .svr-bar i{background:var(--good)}.svr-bar s{background:var(--crit);text-decoration:none}
+  .svr-bar-l{display:flex;gap:18px;font-size:12px;color:var(--ink-soft);margin:6px 0 18px}
+  .svr-bar-l .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+  .dot.ok{background:var(--good)}.dot.bad{background:var(--crit)}
+  .svr-ins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:22px}
+  .svr-i{border:1px solid var(--vein);border-left:4px solid var(--info);background:var(--surface);border-radius:10px;padding:12px 14px}
+  .svr-i h4{margin:0 0 4px;font-size:14px;font-weight:650}
+  .svr-i p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-soft)}
+  .svr-i.i-crit{border-left-color:var(--crit)}.svr-i.i-warn{border-left-color:var(--warn)}.svr-i.i-good{border-left-color:var(--good)}
+  .svr-rs{padding:6px 14px}
+  .svr-r{border-bottom:1px solid var(--vein-soft)}.svr-r:last-child{border-bottom:0}
+  .svr-r summary{display:grid;grid-template-columns:170px 1fr 90px 150px;gap:12px;align-items:center;padding:9px 0;cursor:pointer;list-style:none;font-size:13px}
+  .svr-r summary::-webkit-details-marker{display:none}
+  .svr-rl{font-weight:600}
+  .svr-rail{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden}.svr-rail i{display:block;height:100%;border-radius:999px}
+  .svr-rq{font-family:'JetBrains Mono',monospace;text-align:right}.svr-rq em{font-style:normal;color:var(--ink-faint);margin-left:4px}
+  .svr-ro{font-size:11.5px;color:var(--ink-faint)}.svr-ro.own{color:var(--crit);font-weight:600}
+  .svr-r p{margin:0 0 10px;font-size:13px;color:var(--ink-soft);line-height:1.55}
+  .svr-tbl td{vertical-align:top}.svr-row{cursor:pointer}.svr-row:hover td{background:var(--surface-2)}
+  .svr-pn{font-weight:600;font-size:13px}
+  #svrDash .sec-head,#svrDash .tbar{margin-top:22px}
+  .gd{text-align:left;margin-top:8px}
+  .gd-pre{background:var(--info-bg);border:1px solid var(--vein);border-radius:12px;padding:12px 16px;font-size:13.5px;line-height:1.6;color:var(--ink)}
+  .gd-steps{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+  .gd-s{display:flex;gap:14px;background:var(--surface);border:1px solid var(--vein);border-radius:12px;padding:14px 16px}
+  .gd-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--onyx);color:#fff;font-weight:700;display:grid;place-items:center;font-size:13px}
+  .gd-s:not(.req) .gd-n{background:var(--dead)}
+  .gd-b{min-width:0}
+  .gd-h{font-weight:650;font-size:15px}
+  .gd-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--crit-bg);color:var(--crit);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+  .gd-tag.opt{background:var(--dead-bg);color:var(--dead)}
+  .gd-path{margin:6px 0;font-size:13px;background:var(--surface-2);border-radius:8px;padding:7px 10px;line-height:1.5}
+  .gd-b ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--ink-soft)}
+  .gd-why{margin-top:6px;font-size:12.5px;color:var(--good)}
+  .gd-tabs{margin-top:16px;background:var(--surface);border:1px solid var(--vein);border-radius:12px;padding:14px 16px}
+  .gd-tabs h4{margin:0 0 8px;font-size:14px}
+  .gd-tabs dl{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;margin:0;font-size:13px}
+  .gd-tabs dt{font-weight:650}.gd-tabs dd{margin:0;color:var(--ink-soft)}
+  .empty .gd-wrap{max-width:820px;margin:34px auto 0}
+  .empty .gd-wrap>h3{text-align:left;font-size:19px;margin:0 0 4px}
+  .empty .gd-wrap>p{text-align:left;margin:0;max-width:none;font-size:14px}
+  @media (max-width:900px){.svr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.svr-ins{grid-template-columns:1fr}}
+  @media (max-width:560px){.svr-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.svr-r summary{grid-template-columns:1fr 70px}.svr-rail,.svr-ro{display:none}.gd-tabs dl{grid-template-columns:1fr}}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -1034,7 +1090,7 @@
   <section class="empty" id="empty">
     <span class="mono" style="font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--onyx)">Ecommerce Decision Intelligence</span>
     <h1>Stop reading reports. <em>Start making decisions.</em></h1>
-    <p>Drop in your sales, advertising, inventory and returns exports. Profit Compass reads across all four and tells you what needs attention, where money is leaking, what deserves more budget, and what to do today &mdash; with the money at stake attached to every one.</p>
+    <p>Drop in your Amazon sales, returns and inventory exports (FBA and 3PL). Profit Compass lines your returns up against your sales, shows the return rate and money lost per product, explains why, and tells you what to fix first.</p>
     <div class="dropzone" id="dropzone">
       <div class="dz-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg></div>
       <div class="dz-t">Drop your Excel or CSV here</div>
@@ -1042,6 +1098,7 @@
     </div>
     <div class="hint">Reads Amazon Business Reports, Sponsored Products, FBA Manage Inventory, FBA Returns and 3PL sheets.<br>
       Each file type is recognised automatically. Everything is processed in your browser &mdash; nothing is uploaded anywhere.</div>
+    <div class="gd-wrap"><h3>Where to get each report</h3><p>Download these from Seller Central, then drop them in above. Steps 1 and 2 are all you need to compare sales with returns.</p><div id="guideEmpty"></div></div>
   </section>
 
   <!-- dashboard -->
@@ -1337,7 +1394,6 @@
       </div>
       <p class="sech-s">Ranked by money at stake, urgency, evidence and how actionable each one is. Click any row for the detail.</p>
       <div class="sig-acc" id="mattersList"></div>
-      <div class="today-cta"><button class="btn ghost" data-goto="actions">Open the full action queue</button></div>
     </div>
 
     <div class="two-col">
@@ -1397,6 +1453,28 @@
     <div id="prodBody"></div>
   </section>
 
+
+  <!-- ============ SALES vs RETURNS ============ -->
+  <section class="dash" id="svrDash">
+    <div class="page-head">
+      <h2 class="tHead">Sales vs Returns</h2>
+      <p class="page-sub">How much of what you sell comes back, which products drive it, why, and what it costs you &mdash; using the latest sales and returns reports loaded.</p>
+    </div>
+    <div id="svrHero"></div>
+    <div id="svrIns"></div>
+    <div id="svrReasons"></div>
+    <div id="svrMarkets"></div>
+    <div id="svrBody"></div>
+  </section>
+
+  <!-- ============ REPORT GUIDE ============ -->
+  <section class="dash" id="guideDash">
+    <div class="page-head">
+      <h2 class="tHead">Report guide</h2>
+      <p class="page-sub">Where to download each report in Seller Central, and what the tool uses it for.</p>
+    </div>
+    <div id="guideBody"></div>
+  </section>
 
   <!-- ============ REIMBURSEMENTS ============ -->
   <section class="dash" id="reimbDash">
@@ -2936,19 +3014,19 @@ function refreshViewSwitch(){
   // primary decision nav — always available once any report is loaded
   const nav=$('#navMain');
   nav.style.display='flex';
-  nav.innerHTML=DECISION_KEYS.map(v=>`<button data-v="${v}" class="${v===DB.view?'on':''}">${DECISION_VIEWS[v].label}</button>`).join('');
+  nav.innerHTML=NAV_KEYS.map(v=>`<button data-v="${v}" class="${v===DB.view?'on':''}">${DECISION_VIEWS[v].label}</button>`).join('');
   // secondary: the underlying reports
   const present=presentViews();
   const rw=$('#reportsWrap'),rm=$('#reportsMenu');
   if(present.length){
     rw.style.display='block';
     rm.innerHTML='<div class="rep-h">Underlying reports</div>'+
-      present.map(v=>`<button data-v="${v}" class="${v===DB.view?'on':''}">${VIEWS[v].label}</button>`).join('');
+      present.filter(v=>v!=='insights'||DATASET).map(v=>`<button data-v="${v}" class="${v===DB.view?'on':''}">${VIEWS[v].label}</button>`).join('');
     $('#reportsBtn').classList.toggle('primary',!isDecisionView(DB.view));
   }else{rw.style.display='none';rm.innerHTML='<div class="rep-empty">No reports loaded yet.</div>';}
 }
 
-const DEC_SECTION={today:'todayDash',actions:'actionsDash',leaks:'leaksDash',growth:'growthDash',iq:'iqDash',products:'productsDash',reimb:'reimbDash',ask:'askDash'};
+const DEC_SECTION={today:'todayDash',actions:'actionsDash',leaks:'leaksDash',growth:'growthDash',iq:'iqDash',products:'productsDash',reimb:'reimbDash',ask:'askDash',svr:'svrDash',guide:'guideDash'};
 function render(){
   const anyData=DB.periods.length||(DB.returns||[]).length||(DB.ads||[]).length||(DB.inventory||[]).length||coverageActive()||!!DATASET;
   if(!anyData){showEmpty();return;}
@@ -3775,7 +3853,7 @@ function drawInsCharts(I){
     options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>c[0].label+' discount',label:c=>{const x=db[c.dataIndex];return [fUSD(x.profit)+' profit',fUSD(x.sales)+' sales · '+num(x.n)+' orders'];}}}},scales:{y:{ticks:{callback:money,font:{size:10}},grid:{color:'rgba(32,35,30,.05)'}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}})});
 }
 
-function showEmpty(){$('#empty').style.display='block';['todayDash','actionsDash','leaksDash','growthDash','iqDash','productsDash','askDash'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});$('#navMain').style.display='none';$('#reportsWrap').style.display='none';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');$('#coverageDash').classList.remove('on');$('#insightsDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
+function showEmpty(){$('#empty').style.display='block';{const g=document.getElementById('guideEmpty');if(g&&!g.innerHTML)g.innerHTML=GUIDE_HTML;}['todayDash','actionsDash','leaksDash','growthDash','iqDash','productsDash','askDash','reimbDash','svrDash','guideDash'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});$('#navMain').style.display='none';$('#reportsWrap').style.display='none';$('#dash').classList.remove('on');$('#returnsDash').classList.remove('on');$('#adsDash').classList.remove('on');$('#invDash').classList.remove('on');$('#ledgerDash').classList.remove('on');$('#coverageDash').classList.remove('on');$('#insightsDash').classList.remove('on');$('#periodSelWrap').style.display='none';$('#manageBtn').style.display='none';$('#exportWrap').style.display='none';$('#viewSwitch').style.display='none';}
 
 /* ---------- shipment planner dashboard ---------- */
 let lastP=null;
@@ -3796,6 +3874,7 @@ function downloadBlob(name,type,content){
   setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},800);
 }
 async function exportCSV(){
+  if(DB.view==='svr'){exportSvrCSV();return;}
   if(DB.view==='returns'){
     const cur=(DB.returns||[]).find(p=>p.id===DB.currentReturnsId);if(!cur)return;
     const R=computeReturns(cur.rows,curSalesRows());
@@ -4564,7 +4643,8 @@ function buildFacts(){
   });
 
   const facts=Object.values(F).filter(f=>f.units>0||f.sales>0||f.onHand>0||f.offsite>0||f.adSpend>0||f.retQty>0);
-  facts.forEach(f=>enrichFact(f,st));
+  const noInv=!Object.keys(invAll).length;
+  facts.forEach(f=>{f.noInv=noInv;enrichFact(f,st);});
   return {facts,adGroups,adsNoAsinSpend,adsNoAsinSales,curRetQty,prevRetQty,
     hasSales:Object.keys(salesCur).length>0,hasPrevSales:Object.keys(salesPrev).length>0,
     hasReturns:Object.keys(retCur).length>0,hasPrevReturns:Object.keys(retPrev).length>0,
@@ -4634,6 +4714,7 @@ function enrichFact(f,st){
 }
 
 function classifyInventory(f,st){
+  if(f.noInv)return 'none';
   if(f.totalOwned<=0)return f.velocity>0?'stockout':'none';
   if(f.velocity<=0)return f.totalOwned>0?'dead':'none';
   if(f.daysCover<st.lowCover)return 'risk';
@@ -4693,7 +4774,7 @@ function buildAggregate(FA){
   const costKnownShare=f.length?f.filter(x=>x.costKnown).length/f.length*100:0;
   return {
     revenue,prevRevenue,units,prevUnits,orders,netRevenue,returned,retQty,
-    returnRate:units>0?retQty/units*100:null,
+    returnRate:units>0?f.filter(x=>x.units>0).reduce((a,x)=>a+(x.retQty||0),0)/units*100:null,
     prevReturnRate:(FA.hasPrevReturns&&prevUnits>0)?FA.prevRetQty/prevUnits*100:null,
     adSpend,adSales,roas:adSpend>0?adSales/adSpend:null,acos:adSales>0?adSpend/adSales*100:null,
     tacos:revenue>0?adSpend/revenue*100:null,
@@ -4702,7 +4783,7 @@ function buildAggregate(FA){
     stockValue,slowCash,deadCash,slowCount:slow.length,deadCount:dead.length,
     revGrowth:prevRevenue>0?(revenue-prevRevenue)/prevRevenue*100:null,
     skuCount:f.length,costKnownShare,mFactor,
-    avgReturnRate:units>0?retQty/units*100:0
+    avgReturnRate:units>0?f.filter(x=>x.units>0).reduce((a,x)=>a+(x.retQty||0),0)/units*100:0
   };
 }
 
@@ -5554,15 +5635,19 @@ function applyBulkCosts(text){
 
 /* ---------- decision-view registry & wiring ---------- */
 const DECISION_VIEWS={
-  today:{label:'Today',icon:'\u2600'},
+  today:{label:'Overview',icon:'\u2600'},
+  svr:{label:'Sales vs Returns',icon:'\u21C4'},
   actions:{label:'Actions',icon:'\u2713'},
   leaks:{label:'Money Leaks',icon:'\u25BC'},
   growth:{label:'Growth',icon:'\u25B2'},
-  iq:{label:'Inventory IQ',icon:'\u25A6'},
+  iq:{label:'Inventory',icon:'\u25A6'},
   products:{label:'Products',icon:'\u2317'},
   reimb:{label:'Reimbursements',icon:'\u21BA'},
-  ask:{label:'Ask',icon:'?'}
+  ask:{label:'Ask',icon:'?'},
+  guide:{label:'Report guide',icon:'i'}
 };
+/* tabs shown in the top bar; the rest stay reachable from links on Overview */
+const NAV_KEYS=['today','svr','iq','products','reimb','guide'];
 const DECISION_KEYS=Object.keys(DECISION_VIEWS);
 function isDecisionView(v){return DECISION_KEYS.includes(v);}
 function renderDecision(v){
@@ -5575,6 +5660,8 @@ function renderDecision(v){
   else if(v==='products')renderProducts();
   else if(v==='reimb')renderReimb();
   else if(v==='ask')renderAsk();
+  else if(v==='svr')renderSvr();
+  else if(v==='guide')renderGuide();
 }
 
 function wireDecision(){
@@ -5728,10 +5815,11 @@ function renderToday(){
     <div class="mini-big lk">${fMoneyK(L.profitTotal)}<span>/month profit</span></div>
     ${L.cashTotal>0?`<div class="mini-sub">plus ${fMoneyK(L.cashTotal)} of cash tied up in stock</div>`:''}
     <ul class="mini-list">${L.cats.slice(0,3).map(c=>`<li><span>${c.cat}</span><b>${fMoneyK(c.profit||c.cash)}</b></li>`).join('')||'<li class="none">None detected</li>'}</ul>`;
-  const G=SIG.filter(s=>s.kind==='growth');
-  $('#growthMini').innerHTML=`<div class="mini-h"><h4>Growth opportunities</h4><button class="lnk" data-goto="growth">View all</button></div>
-    <div class="mini-big gr">${G.length?fMoneyK(G.reduce((a,s)=>a+s.impact,0)):'\u2014'}<span>/month upside</span></div>
-    <ul class="mini-list">${G.slice(0,3).map(s=>`<li><span>${short(s.title,38)}</span><b>${fMoneyK(s.impact)}</b></li>`).join('')||'<li class="none">None detected yet</li>'}</ul>`;
+  {const D=svrData();
+  $('#growthMini').innerHTML=`<div class="mini-h"><h4>Sales vs returns</h4><button class="lnk" data-goto="svr">Open</button></div>
+    <div class="mini-big lk">${D.rate==null?'\u2014':pct(D.rate)}<span>return rate</span></div>
+    <div class="mini-sub">${num(D.matchedRet)} returned of ${num(D.sold)} sold \u00B7 ${fUSD(D.retVal)} handed back</div>
+    <ul class="mini-list">${[...D.matched].filter(f=>f.retQty>0).sort((a,b)=>b.returnedRevenue-a.returnedRevenue).slice(0,3).map(f=>`<li><span>${esc(short(f.title||f.asin,34))} \u00B7 ${pct(f.returnRate)}</span><b>${fMoneyK(f.returnedRevenue)}</b></li>`).join('')||'<li class="none">No returns loaded</li>'}</ul>`;}
 }
 
 /* one collapsible row: headline always visible, detail on demand */
@@ -6885,6 +6973,291 @@ function renderSalesVsReturns(){
         Returns may relate to orders placed before this period, so treat the rate as indicative rather than exact.</div>
     </div>`}`;
 }
+
+
+/* ==========================================================================
+   SALES vs RETURNS — one page that lines every product's sales up against
+   its returns, then says in plain words what the comparison means.
+   ========================================================================== */
+let svrFilter={q:'',show:'all',sort:'retval'},svrShown=25;
+
+function svrData(){
+  const {FA}=intel();
+  const rows=FA.facts.filter(f=>f.units>0||f.retQty>0);
+  const sold=rows.reduce((a,f)=>a+f.units,0);
+  const matched=rows.filter(f=>f.units>0);
+  const matchedRet=matched.reduce((a,f)=>a+f.retQty,0);
+  const orphan=rows.filter(f=>f.units<=0&&f.retQty>0);
+  const orphanQty=orphan.reduce((a,f)=>a+f.retQty,0);
+  const totRet=rows.reduce((a,f)=>a+f.retQty,0);
+  const revenue=rows.reduce((a,f)=>a+f.sales,0);
+  const retVal=matched.reduce((a,f)=>a+f.returnedRevenue,0);
+  const handling=matched.reduce((a,f)=>a+f.returnHandling,0);
+  const lostGoods=rows.reduce((a,f)=>a+f.lostGoods,0);
+  const resell=rows.reduce((a,f)=>a+f.retResellable,0);
+  const rate=sold>0?matchedRet/sold*100:null;
+  // previous period, when both reports exist for it
+  let prevRate=null;
+  if(FA.hasPrevSales&&FA.hasPrevReturns){
+    const pu=FA.facts.reduce((a,f)=>a+(f.prevUnits||0),0);
+    if(pu>0)prevRate=FA.prevRetQty/pu*100;
+  }
+  // reasons, grouped by who can fix them
+  const reasons={};
+  rows.forEach(f=>Object.entries(f.retReasons||{}).forEach(([k,v])=>{reasons[k]=(reasons[k]||0)+v;}));
+  const reasonArr=Object.entries(reasons).map(([label,qty])=>{
+    const fx=RETURN_FIX[label]||RETURN_FIX['No reason given'];
+    return {label,qty,own:fx.own,cause:fx.cause,fix:fx.fix,group:CAUSE_GROUP[fx.cause]||CAUSE_GROUP.unknown};
+  }).sort((a,b)=>b.qty-a.qty);
+  const ownQty=reasonArr.filter(r=>r.own).reduce((a,r)=>a+r.qty,0);
+  const amazonQty=reasonArr.filter(r=>r.cause==='amazon'||r.cause==='carrier').reduce((a,r)=>a+r.qty,0);
+  return {FA,rows,matched,orphan,orphanQty,sold,matchedRet,totRet,revenue,retVal,handling,lostGoods,resell,
+    rate,prevRate,reasonArr,ownQty,amazonQty,net:revenue-retVal};
+}
+
+function rateCls(r,avg){if(r==null)return '';const a=avg||5;return r>=Math.max(a*2,a+4)?'a-crit':r>a?'a-warn':'a-good';}
+
+function svrInsights(D){
+  const out=[],avg=D.rate;
+  if(!D.FA.hasSales&&!D.FA.hasReturns)return out;
+  if(!D.FA.hasReturns){out.push({t:'info',h:'No returns report loaded',b:'Load your FBA Customer Returns report to compare returns against these sales. See the <b>Report guide</b> tab for where to download it.'});return out;}
+  if(!D.FA.hasSales){out.push({t:'info',h:'No sales report loaded',b:'Return counts are shown, but a rate needs units sold. Load the Business Report “Detail Page Sales and Traffic By Child Item” for the same dates.'});}
+
+  if(avg!=null){
+    const verdict=avg<3?'low — healthy for most categories':avg<=8?'moderate — typical for many categories, but worth trimming':'high — returns are a serious drag on profit';
+    out.push({t:avg<3?'good':avg<=8?'warn':'crit',h:`${pct(avg)} of units sold came back`,
+      b:`${num(D.matchedRet)} returns against ${num(D.sold)} units sold. That is <b>${fUSD(D.retVal)}</b> of revenue handed back — ${pct(D.revenue>0?D.retVal/D.revenue*100:0)} of sales. The rate is ${verdict}.`});
+  }
+  if(avg!=null&&D.prevRate!=null){
+    const d=avg-D.prevRate;
+    if(Math.abs(d)>=0.3)out.push({t:d>0?'crit':'good',h:`Return rate ${d>0?'rose':'fell'} ${Math.abs(d).toFixed(1)} points`,
+      b:`From ${pct(D.prevRate)} in the previous period to ${pct(avg)} now. ${d>0?'Check the reasons below for what changed — a new batch, a listing edit or a new competitor are the usual causes.':'Whatever changed is working — keep it.'}`});
+  }
+  // concentration
+  const byQty=[...D.rows].filter(f=>f.retQty>0).sort((a,b)=>b.retQty-a.retQty);
+  if(byQty.length>=4&&D.totRet>0){
+    let acc=0,k=0;while(k<byQty.length&&acc<D.totRet*0.5){acc+=byQty[k].retQty;k++;}
+    if(k<=Math.max(3,byQty.length*0.25))
+      out.push({t:'warn',h:`${k} product${k===1?' causes':'s cause'} ${Math.round(acc/D.totRet*100)}% of all returns`,
+        b:`Fix these first and most of the problem goes: ${byQty.slice(0,k).map(f=>`<span class="skuchip" data-sku="${f.key}">${esc(short(f.title||f.asin,30))}</span>`).join(' ')}`});
+  }
+  // outliers vs store average
+  if(avg!=null){
+    const out2=D.matched.filter(f=>f.units>=10&&f.returnRate!=null&&f.returnRate>=Math.max(avg*2,avg+4)).sort((a,b)=>b.returnedRevenue-a.returnedRevenue);
+    if(out2.length)out.push({t:'crit',h:`${out2.length} product${out2.length===1?' returns':'s return'} at more than double the store average`,
+      b:out2.slice(0,4).map(f=>`<span class="skuchip" data-sku="${f.key}">${esc(short(f.title||f.asin,28))}</span> <b>${pct(f.returnRate)}</b>${f.topReturnReason?` (mostly “${f.topReturnReason[0]}”)`:''}`).join(' · ')+
+        '. A rate this far above your others usually points to the listing or the product itself, not the buyer.'});
+    // biggest single drain
+    const top=[...D.matched].sort((a,b)=>b.returnedRevenue-a.returnedRevenue)[0];
+    if(top&&top.returnedRevenue>0&&D.retVal>0)
+      out.push({t:'warn',h:`Biggest drain: ${esc(short(top.title||top.asin,48))}`,
+        b:`${fUSD(top.returnedRevenue)} returned (${Math.round(top.returnedRevenue/D.retVal*100)}% of all returned value) from ${num(top.retQty)} returns on ${num(top.units)} sold — a ${pct(top.returnRate)} rate.`});
+    // clean best sellers
+    const clean=[...D.matched].sort((a,b)=>b.sales-a.sales).slice(0,8).filter(f=>f.units>=10&&(f.returnRate||0)<=avg*0.6).slice(0,3);
+    if(clean.length)out.push({t:'good',h:'Best-sellers with low returns',
+      b:clean.map(f=>`<span class="skuchip" data-sku="${f.key}">${esc(short(f.title||f.asin,28))}</span> ${pct(f.returnRate)}`).join(' · ')+'. These sell well and stay sold — the safest products to push harder.'});
+  }
+  // who can fix it
+  if(D.totRet>0&&D.reasonArr.length){
+    const ownPct=D.ownQty/D.totRet*100;
+    const topOwn=D.reasonArr.find(r=>r.own);
+    out.push({t:ownPct>=50?'warn':'info',h:`${Math.round(ownPct)}% of returns have causes you can fix`,
+      b:`Listing accuracy, sizing, product quality and packing are in your hands${topOwn?` — the biggest is “${topOwn.label}” (${num(topOwn.qty)} units). ${topOwn.fix}`:'.'}`});
+  }
+  if(D.amazonQty>0)out.push({t:'info',h:`${num(D.amazonQty)} returns were Amazon's or the carrier's fault`,
+    b:'Damaged in the warehouse, lost or undeliverable. These may be claimable — open the <button class="lnk" data-goto="reimb">Reimbursements</button> tab.'});
+  if(D.totRet>0){
+    const rs=D.resell/D.totRet*100;
+    out.push({t:rs>=60?'good':'warn',h:`${Math.round(rs)}% came back resellable`,
+      b:`${num(D.totRet-D.resell)} units could not go back on sale — roughly <b>${fUSD(D.lostGoods)}</b> of stock written off at cost, plus about ${fUSD(D.handling)} in return handling.`});
+  }
+  if(D.orphanQty>0)out.push({t:'info',h:`${num(D.orphanQty)} returns have no matching sales`,
+    b:`They belong to ${D.orphan.length} product${D.orphan.length===1?'':'s'} not in the loaded sales report — usually older orders, or a marketplace whose sales report isn't loaded. They are left out of the rate.`});
+  // marketplace with the worst rate
+  try{
+    const C=buildSalesVsReturns('all');
+    const mk=C.withBoth.filter(r=>r.units>=20&&r.rate!=null).sort((a,b)=>b.rate-a.rate);
+    if(mk.length>=2)out.push({t:'info',h:`Highest return rate by marketplace: ${mk[0].name}`,
+      b:`${pct(mk[0].rate)} there versus ${pct(mk[mk.length-1].rate)} in ${mk[mk.length-1].name}. A gap this size can mean a translation or sizing-convention problem in that market's listing.`});
+  }catch(e){}
+  return out;
+}
+
+function svrApply(D){
+  const avg=D.rate||0,q=svrFilter.q.trim().toLowerCase();
+  let L=D.rows.slice();
+  if(q)L=L.filter(f=>(f.title||'').toLowerCase().includes(q)||(f.asin||'').toLowerCase().includes(q));
+  if(svrFilter.show==='high')L=L.filter(f=>f.returnRate!=null&&f.returnRate>avg);
+  else if(svrFilter.show==='top')L=[...L].filter(f=>f.units>0).sort((a,b)=>b.sales-a.sales).slice(0,20);
+  else if(svrFilter.show==='noret')L=L.filter(f=>f.units>0&&f.retQty===0);
+  else if(svrFilter.show==='orphan')L=L.filter(f=>f.units<=0&&f.retQty>0);
+  const key={retval:f=>f.returnedRevenue,rate:f=>f.returnRate==null?-1:f.returnRate,ret:f=>f.retQty,sales:f=>f.sales,units:f=>f.units}[svrFilter.sort]||(f=>f.returnedRevenue);
+  return L.sort((a,b)=>key(b)-key(a)||b.retQty-a.retQty);
+}
+
+function renderSvr(){
+  const D=svrData(),avg=D.rate;
+  const box=$('#svrBody');
+  if(!D.FA.hasSales&&!D.FA.hasReturns){
+    box.innerHTML=`<div class="none">Load a sales report and an FBA returns report to compare them. The <button class="lnk" data-goto="guide">Report guide</button> shows where to find both in Seller Central.</div>`;
+    $('#svrHero').innerHTML='';$('#svrIns').innerHTML='';$('#svrReasons').innerHTML='';$('#svrMarkets').innerHTML='';return;
+  }
+  const lostPct=D.revenue>0?D.retVal/D.revenue*100:null;
+  const chg=(avg!=null&&D.prevRate!=null)?avg-D.prevRate:null;
+  $('#svrHero').innerHTML=`
+    <div class="svr-kpis">
+      <div class="svr-k main ${avg==null?'':avg<3?'k-good':avg<=8?'k-warn':'k-crit'}"><span>Return rate</span><b>${avg==null?'—':pct(avg)}</b>
+        <em>${chg==null?'returned ÷ sold':`${chg>0?'▲':'▼'} ${Math.abs(chg).toFixed(1)} pts vs last period`}</em></div>
+      <div class="svr-k"><span>Units sold</span><b>${num(D.sold)}</b><em>${num(D.matched.length)} products</em></div>
+      <div class="svr-k"><span>Units returned</span><b>${num(D.totRet)}</b><em>${D.orphanQty?`${num(D.orphanQty)} without matching sales`:'all matched to sales'}</em></div>
+      <div class="svr-k"><span>Sales</span><b>${fUSD(D.revenue)}</b><em>gross, this period</em></div>
+      <div class="svr-k"><span>Value returned</span><b class="neg">${fUSD(D.retVal)}</b><em>${lostPct==null?'':pct(lostPct)+' of sales'}</em></div>
+      <div class="svr-k"><span>Net sales</span><b>${fUSD(D.net)}</b><em>after returns</em></div>
+    </div>
+    ${D.revenue>0?`<div class="svr-bar" title="Net sales vs value returned"><i style="width:${Math.max(0,100-lostPct)}%"></i><s style="width:${Math.min(100,lostPct)}%"></s></div>
+    <div class="svr-bar-l"><span><i class="dot ok"></i>Kept ${fUSD(D.net)}</span><span><i class="dot bad"></i>Returned ${fUSD(D.retVal)}</span></div>`:''}`;
+
+  const I=svrInsights(D);
+  $('#svrIns').innerHTML=I.length?`<div class="svr-ins">${I.map(x=>`<div class="svr-i i-${x.t}"><h4>${x.h}</h4><p>${x.b}</p></div>`).join('')}</div>`:'';
+
+  // reasons
+  if(D.reasonArr.length){
+    const mx=D.reasonArr[0].qty||1;
+    $('#svrReasons').innerHTML=`<div class="sec-head"><span class="sec-num">Why they came back</span><div class="t">Return reasons, and who can fix them</div>
+      <div class="d">Click a reason for the fix.</div></div>
+      <div class="panel svr-rs">${D.reasonArr.slice(0,10).map(r=>`
+        <details class="svr-r"><summary>
+          <span class="svr-rl">${esc(r.label)}</span>
+          <span class="svr-rail"><i style="width:${Math.max(3,r.qty/mx*100)}%;background:${r.group.color}"></i></span>
+          <span class="svr-rq">${num(r.qty)} <em>${Math.round(r.qty/Math.max(D.totRet,1)*100)}%</em></span>
+          <span class="svr-ro ${r.own?'own':''}">${r.group.owner}</span></summary>
+          <p>${r.fix}</p></details>`).join('')}
+      </div>`;
+  }else $('#svrReasons').innerHTML='';
+
+  // marketplaces
+  let mk='';
+  try{
+    const C=buildSalesVsReturns('all');
+    if(C.rows.length>1&&C.withBoth.length){
+      mk=`<div class="sec-head"><span class="sec-num">By marketplace</span><div class="t">Where returns are highest</div></div>
+      <div class="panel" style="padding:4px 0;overflow-x:auto"><table class="tbl"><thead><tr><th>Marketplace</th><th>Sold</th><th>Returned</th><th>Rate</th><th>Value returned</th><th>Net sales</th><th>Top reason</th></tr></thead><tbody>
+      ${C.rows.map(r=>`<tr><td><b>${esc(r.name)}</b>${!r.hasSales?' <span class="cmp-tag">no sales report</span>':''}</td>
+        <td class="mono">${r.hasSales?num(r.units):'–'}</td><td class="mono">${num(r.qty)}</td>
+        <td class="mono">${r.rate==null?'–':`<b class="${rateCls(r.rate,avg)}">${pct(r.rate)}</b>`}</td>
+        <td class="mono">${r.hasSales?fUSD(r.returnedValue):'–'}</td><td class="mono">${r.hasSales?fUSD(r.netRevenue):'–'}</td>
+        <td>${esc(r.topReason||'–')}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+  }catch(e){}
+  $('#svrMarkets').innerHTML=mk;
+
+  // product table
+  const L=svrApply(D),shown=L.slice(0,svrShown);
+  const opt=(v,l,cur)=>`<option value="${v}"${cur===v?' selected':''}>${l}</option>`;
+  box.innerHTML=`<div class="sec-head"><span class="sec-num">Product by product</span><div class="t">Sales against returns for every product</div>
+    <div class="d">“vs average” shows how many times the store return rate each product runs at. Click a product for its full picture.</div></div>
+    <div class="tbar">
+      <div class="tbar-l"><input class="tbar-in" id="svrQ" placeholder="Search product or ASIN…" value="${esc(svrFilter.q).replace(/"/g,'&quot;')}"></div>
+      <label class="fsel">Show<select id="svrShow">${opt('all','All products',svrFilter.show)}${opt('high','Above-average returns',svrFilter.show)}${opt('top','Top 20 sellers',svrFilter.show)}${opt('noret','Sold, no returns',svrFilter.show)}${opt('orphan','Returns without sales',svrFilter.show)}</select></label>
+      <label class="fsel">Sort by<select id="svrSort">${opt('retval','Value returned',svrFilter.sort)}${opt('rate','Return rate',svrFilter.sort)}${opt('ret','Units returned',svrFilter.sort)}${opt('sales','Sales',svrFilter.sort)}${opt('units','Units sold',svrFilter.sort)}</select></label>
+      <button class="btn tiny primary" id="svrExport">Export CSV</button>
+    </div>
+    <div class="rb-count">${shown.length} of ${L.length} products</div>
+    <div style="overflow-x:auto"><table class="tbl svr-tbl"><thead><tr>
+      <th>Product</th><th>Sold</th><th>Returned</th><th>Return rate</th><th>vs average</th><th>Sales</th><th>Value returned</th><th>Net sales</th><th>Main reason</th>
+    </tr></thead><tbody>
+    ${shown.map(f=>{const x=(f.returnRate!=null&&avg)?f.returnRate/avg:null;const tr=f.topReturnReason;
+      return `<tr data-sku="${f.key}" class="svr-row">
+      <td><div class="svr-pn">${esc(short(f.title||f.asin,60))}</div><div class="dim mono" style="font-size:11px">${esc(f.asin||'')}${f.units>0&&f.units<10?' · low volume':''}</div></td>
+      <td class="mono">${f.units>0?num(f.units):'–'}</td>
+      <td class="mono">${num(f.retQty)}</td>
+      <td class="mono">${f.returnRate==null?'<span class="dim">no sales</span>':`<b class="${rateCls(f.returnRate,avg)}">${pct(f.returnRate)}</b>`}</td>
+      <td class="mono">${x==null?'–':f.retQty===0?'<span class="a-good">none</span>':`<span class="${x>=2?'a-crit':x>1?'a-warn':'a-good'}">${x.toFixed(1)}×</span>`}</td>
+      <td class="mono">${f.sales>0?fUSD(f.sales):'–'}</td>
+      <td class="mono">${f.returnedRevenue>0?fUSD(f.returnedRevenue):'–'}</td>
+      <td class="mono">${f.sales>0?fUSD(f.netRevenue):'–'}</td>
+      <td>${tr?`${esc(tr[0])} <span class="dim">(${num(tr[1])})</span>`:'–'}</td></tr>`;}).join('')||'<tr><td colspan="9" class="none">Nothing matches.</td></tr>'}
+    </tbody></table></div>
+    ${L.length>shown.length?`<div class="today-cta"><button class="btn ghost" id="svrMore">Show ${Math.min(25,L.length-shown.length)} more</button></div>`:''}
+    <p class="cmp-foot">Return rate = units returned ÷ units sold for the same product, using the latest sales and returns reports loaded.
+      Returns can relate to orders from an earlier period, so treat rates on small volumes as indicative.</p>`;
+
+  const rr=()=>{svrShown=25;renderSvr();};
+  $('#svrQ').oninput=e=>{svrFilter.q=e.target.value;clearTimeout(renderSvr._t);renderSvr._t=setTimeout(()=>{rr();const i=$('#svrQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250);};
+  $('#svrShow').onchange=e=>{svrFilter.show=e.target.value;rr();};
+  $('#svrSort').onchange=e=>{svrFilter.sort=e.target.value;rr();};
+  $('#svrExport').onclick=exportSvrCSV;
+  const m=$('#svrMore');if(m)m.onclick=()=>{svrShown+=25;renderSvr();};
+}
+
+function exportSvrCSV(){
+  const D=svrData(),avg=D.rate;
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const head=['ASIN','Product','Units sold','Units returned','Return rate %','Times store average','Sales','Value returned','Net sales','Resellable returns','Main reason'];
+  const lines=[head.map(q).join(',')];
+  svrApply(D).forEach(f=>lines.push([f.asin,f.title,f.units,f.retQty,f.returnRate==null?'':f.returnRate.toFixed(2),
+    (f.returnRate!=null&&avg)?(f.returnRate/avg).toFixed(2):'',f.sales.toFixed(2),f.returnedRevenue.toFixed(2),f.netRevenue.toFixed(2),
+    f.retResellable,f.topReturnReason?f.topReturnReason[0]:''].map(q).join(',')));
+  downloadBlob('sales_vs_returns.csv','text/csv;charset=utf-8','﻿'+lines.join('\r\n'));
+}
+
+/* ==========================================================================
+   REPORT GUIDE — where each report lives in Seller Central
+   ========================================================================== */
+const GUIDE_HTML=`
+<div class="gd">
+  <div class="gd-pre"><b>Before you start:</b> pick one date range (for example the last 30 days) and use it for every report.
+    Then set <b>Costs → Assumptions → Days the sales report covers</b> to the same number, so the per-day and per-month figures are right.
+    Menu names can differ slightly between marketplaces.</div>
+  <ol class="gd-steps">
+    <li class="gd-s req"><div class="gd-n">1</div><div class="gd-b">
+      <div class="gd-h">Sales &amp; Traffic report <span class="gd-tag">Required</span></div>
+      <div class="gd-path">Seller Central → <b>Reports</b> → <b>Business Reports</b> → under <i>By ASIN</i> choose <b>Detail Page Sales and Traffic By Child Item</b></div>
+      <ul><li>Set the date range at the top, then click <b>Download (.csv)</b>.</li>
+        <li>Do this once per marketplace: switch marketplace in the Seller Central top bar, download again.</li>
+        <li>When you upload, tag each file with its country.</li></ul>
+      <div class="gd-why">Gives units sold, sales and sessions per product — the base for every return rate.</div></div></li>
+    <li class="gd-s req"><div class="gd-n">2</div><div class="gd-b">
+      <div class="gd-h">FBA Customer Returns <span class="gd-tag">Required for returns</span></div>
+      <div class="gd-path">Seller Central → <b>Reports</b> → <b>Fulfillment</b> → left menu, under <i>Customer Concessions</i>, click <b>Returns</b></div>
+      <ul><li>Choose the same date range, click <b>Request .csv Download</b>, then <b>Download</b> when it's ready.</li>
+        <li>One file covers every marketplace in your region — the tool splits it by marketplace for you.</li>
+        <li>Returns lag orders by one to three weeks, so the most recent days will read slightly low.</li></ul>
+      <div class="gd-why">Gives every returned unit, its reason and the condition it came back in.</div></div></li>
+    <li class="gd-s"><div class="gd-n">3</div><div class="gd-b">
+      <div class="gd-h">FBA Inventory <span class="gd-tag opt">Recommended</span></div>
+      <div class="gd-path">Seller Central → <b>Reports</b> → <b>Fulfillment</b> → under <i>Inventory</i>, click <b>Manage FBA Inventory</b> → <b>Request .csv Download</b></div>
+      <ul><li>This is a snapshot of today's stock — no date range needed.</li>
+        <li>Download one per marketplace and tag it with the country.</li></ul>
+      <div class="gd-why">Gives stock on hand, inbound, reserved and unsellable units — used for days of cover.</div></div></li>
+    <li class="gd-s"><div class="gd-n">4</div><div class="gd-b">
+      <div class="gd-h">3PL / own warehouse stock <span class="gd-tag opt">Optional</span></div>
+      <div class="gd-path">Export from your 3PL portal, or keep your own sheet</div>
+      <ul><li>Columns needed: <b>ASIN</b>, <b>Qty</b> (units available) and <b>Carton Cost</b>. A product name column is optional.</li>
+        <li>.xlsx or .csv both work.</li></ul>
+      <div class="gd-why">Adds stock held outside Amazon and lets the tool work out a real unit cost (carton cost ÷ quantity).</div></div></li>
+    <li class="gd-s"><div class="gd-n">5</div><div class="gd-b">
+      <div class="gd-h">Sponsored Products ads <span class="gd-tag opt">Optional</span></div>
+      <div class="gd-path">Advertising → <b>Campaign Manager</b> → <b>Measurement &amp; Reporting</b> → <b>Sponsored ads reports</b> → <b>Create report</b></div>
+      <ul><li>Campaign type <b>Sponsored Products</b>, report type <b>Advertised product</b>, time unit <b>Summary</b>, same date range.</li>
+        <li>Run the report and download it once it shows as completed.</li></ul>
+      <div class="gd-why">Adds ad spend per product, so profit figures include advertising.</div></div></li>
+    <li class="gd-s"><div class="gd-n">6</div><div class="gd-b">
+      <div class="gd-h">Upload</div>
+      <ul><li>Drop the files onto this page — several at once is fine. Each report type is recognised automatically.</li>
+        <li>Confirm the country and a label (e.g. “Oct 2026”) when asked.</li>
+        <li>Add unit costs under <b>Costs</b> for real profit figures — otherwise an assumed margin is used and labelled.</li>
+        <li>Everything stays in your browser. Nothing is uploaded anywhere.</li></ul></div></li>
+  </ol>
+  <div class="gd-tabs"><h4>What each tab shows</h4>
+    <dl><dt>Overview</dt><dd>Business health and the few things that need attention first.</dd>
+      <dt>Sales vs Returns</dt><dd>Every product's sales lined up against its returns, with the return rate, money lost, reasons and plain-language insights.</dd>
+      <dt>Inventory</dt><dd>Days of cover across Amazon and 3PL stock, stockout dates and excess.</dd>
+      <dt>Products</dt><dd>One row per product with its full picture.</dd>
+      <dt>Reimbursements</dt><dd>Returns Amazon or the carrier caused, and what you can still claim.</dd>
+      <dt>Reports ▾</dt><dd>The raw dashboards for each uploaded report (Sales, Returns, Inventory, Ads).</dd></dl></div>
+</div>`;
+function renderGuide(){const b=$('#guideBody');if(b&&!b.innerHTML)b.innerHTML=GUIDE_HTML;}
 
 /* ---------- boot ---------- */
 (async function(){
